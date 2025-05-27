@@ -4,12 +4,18 @@ import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AntDesign } from '@expo/vector-icons';
 import { Provider } from 'react-redux';
-import { store } from './store/store';
+import store from './store';
+import CreateAssignmentScreen from './screens/CreateAssignmentScreen';
+// ...
+
 import HomeScreen from './screens/HomeScreen';
 import FolderScreen from './screens/FolderScreen';
 import TaskScreen from './screens/TaskScreen';
 import UtilityScreen from './screens/UtilityScreen';
 import NotificationScreen from './screens/NotificationScreen';
+import UserScreen from './screens/UserScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import AssignmentDetailScreen from './screens/AssignmentDetailScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -100,13 +106,12 @@ export default function App() {
     <Provider store={store}>
       <NavigationContainer>
         <Stack.Navigator 
-          
           screenOptions={{
             headerStyle: {
               backgroundColor: '#99D2E7',
               height: 32,
             },
-            headerTintColor: '#fff',
+            headerTintColor: '#2d2d6a',
             headerTitleStyle: {
               fontWeight: 'bold',
             },
@@ -118,8 +123,38 @@ export default function App() {
             component={TabNavigator} 
             options={{ 
               headerShown: true,
-              
             }} 
+          />
+          <Stack.Screen 
+            name="UserScreen" 
+            component={UserScreen}
+            options={{
+              title: 'User Profile',
+              headerLeft: () => null
+            }}
+          />
+          <Stack.Screen 
+            name="SettingsScreen" 
+            component={SettingsScreen}
+            options={{
+              title: 'Settings',
+              headerLeft: () => null
+            }}
+          />
+          <Stack.Screen 
+            name="AssignmentDetailScreen" 
+            component={AssignmentDetailScreen}
+            options={{
+              title: 'Chi tiết bài tập',
+              headerLeft: () => null
+            }}
+          />
+          <Stack.Screen 
+            name="CreateAssignment" 
+            component={CreateAssignmentScreen}
+            options={{
+              headerLeft: () => null
+            }}
           />
         </Stack.Navigator>
       </NavigationContainer>
