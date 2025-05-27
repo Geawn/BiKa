@@ -2,25 +2,18 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, SafeAreaView, Platform, StatusBar } from 'react-native';
-import HomeScreen from './screens/HomeScreen';
-import DetailScreen from './screens/DetailScreen';
-import SearchScreen from './screens/SearchScreen';
-import SplashScreen from './components/SplashScreen';
-import CategoryScreen from './screens/CategoryScreen';
-import AddCateScreen from './screens/AddCateScreen';
-import SavedArticlesScreen from './screens/SavedArticlesScreen';
-import UtilityScreen from './screens/UtilityScreen';
-import SettingsScreen from './screens/SettingsScreen';
 import { AntDesign } from '@expo/vector-icons';
-
-import { store } from './store/store';
 import { Provider } from 'react-redux';
+import { store } from './store/store';
+import HomeScreen from './screens/HomeScreen';
+import FolderScreen from './screens/FolderScreen';
+import TaskScreen from './screens/TaskScreen';
+import UtilityScreen from './screens/UtilityScreen';
+import NotificationScreen from './screens/NotificationScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Main tab navigator
 function TabNavigator() {
   return (
     <Tab.Navigator
@@ -46,7 +39,7 @@ function TabNavigator() {
           shadowOpacity: 0.25,
           shadowRadius: 3.84,
         },
-        headerShown: false, // Hide the header for the tab navigator
+        headerShown: false,
       }}>
       <Tab.Screen
         name="HomeTab"
@@ -59,7 +52,27 @@ function TabNavigator() {
         }}
       />
       <Tab.Screen
+        name="Folder"
+        component={FolderScreen}
+        options={{
+          tabBarLabel: 'Assignment',
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="folderopen" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="Utility"
+        component={TaskScreen}
+        options={{
+          tabBarLabel: 'Task',
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="laptop" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
         component={UtilityScreen}
         options={{
           tabBarLabel: 'Tiện ích',
@@ -69,12 +82,12 @@ function TabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
+        name="Notification"
+        component={NotificationScreen}
         options={{
-          tabBarLabel: 'Cài đặt',
+          tabBarLabel: 'Thông báo',
           tabBarIcon: ({ color, size }) => (
-            <AntDesign name="setting" size={size} color={color} />
+            <AntDesign name="bells" size={size} color={color} />
           ),
         }}
       />
@@ -86,22 +99,28 @@ export default function App() {
   return (
     <Provider store={store}>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Splash">
-          <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="MainApp" component={TabNavigator} options={{ headerShown: false }} />
-          <Stack.Screen name="Detail" component={DetailScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
-          <Stack.Screen
-            name="Category"
-            component={CategoryScreen}
-            options={{
-              headerShown: false,
-              gestureDirection: 'horizontal-inverted',
-              cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-            }}
+        <Stack.Navigator 
+          
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#99D2E7',
+              height: 32,
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+            headerShown: true,
+          }}
+        >
+          <Stack.Screen 
+            name="MainApp" 
+            component={TabNavigator} 
+            options={{ 
+              headerShown: true,
+              
+            }} 
           />
-          <Stack.Screen name="AddCate" component={AddCateScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="SavedArticles" component={SavedArticlesScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>
