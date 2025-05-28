@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -6,6 +6,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { Provider } from 'react-redux';
 import store from './store';
 import CreateAssignmentScreen from './screens/CreateAssignmentScreen';
+import OnboardingScreen from './screens/OnboardingScreen';
 // ...
 
 import HomeScreen from './screens/HomeScreen';
@@ -18,7 +19,11 @@ import SettingsScreen from './screens/SettingsScreen';
 import AssignmentDetailScreen from './screens/AssignmentDetailScreen';
 import CreateTaskScreen from './screens/CreateTaskScreen';
 import TaskDetailScreen from './screens/TaskDetailScreen';
-
+import LoginScreen from './screens/LoginScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import SplashScreen from './screens/SplashScreen';
+import SignUpScreen from './screens/SignUpScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -104,10 +109,29 @@ function TabNavigator() {
 }
 
 export default function App() {
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem('alreadyLaunched').then(value => {
+      if (value === null) {
+        AsyncStorage.setItem('alreadyLaunched', 'true');
+        setIsFirstLaunch(true);
+      } else {
+        setIsFirstLaunch(false);
+      }
+    });
+  }, []);
+
+  if (isFirstLaunch === null) {
+    return null; // This is the "tricky" part
+  }
+
   return (
     <Provider store={store}>
       <NavigationContainer>
         <Stack.Navigator 
+         initialRouteName={isFirstLaunch ? "Onboarding" : "Splash"} // bật dòng này, tắt dòng dưới để bật login log out
+         //   initialRouteName="MainApp"
           screenOptions={{
             headerStyle: {
               backgroundColor: '#99D2E6',
@@ -120,6 +144,32 @@ export default function App() {
             headerShown: true,
           }}
         >
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Splash"
+            component={SplashScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="EditProfile" 
+            component={EditProfileScreen}
+            options={{
+              title: 'Chỉnh sửa thông tin',
+              headerStyle: {
+                backgroundColor: '#99D2E6',
+                height: 32,
+              },
+              headerTintColor: '#2d2d6a',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+              headerLeft: () => null
+            }}
+          />
           <Stack.Screen 
             name="MainApp" 
             component={TabNavigator} 
@@ -175,6 +225,16 @@ export default function App() {
               headerLeft: () => null,
               headerShown: true
             }}
+          />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SignUp"
+            component={SignUpScreen}
+            options={{ headerShown: false }}
           />
         </Stack.Navigator>
       </NavigationContainer>

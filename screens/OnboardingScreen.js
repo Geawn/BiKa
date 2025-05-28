@@ -28,12 +28,12 @@ export default function OnboardingScreen({ navigation }) {
     if (currentIndex < slides.length - 1) {
       flatListRef.current.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      navigation.replace('MainApp');
+      navigation.replace('Login');
     }
   };
 
   const handleSkip = () => {
-    navigation.replace('MainApp');
+    navigation.replace('Login');
   };
 
   const renderItem = ({ item, index }) => (

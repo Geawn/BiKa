@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import TopBar from '../components/TopBar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../config/api';
 
 export default function FolderScreen({ navigation }) {
   const [assignments, setAssignments] = useState([]);
@@ -9,43 +11,47 @@ export default function FolderScreen({ navigation }) {
   const [sortAsc, setSortAsc] = useState(false);
 
   useEffect(() => {
-    // Gọi API thật ở đây, ví dụ:
-    // fetch('API_URL').then(res => res.json()).then(setAssignments);
-    // Dưới đây là mock data:
-    setAssignments([
-      {
-        id: '1',
-        avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-        name: 'Trần Ngọc Bảo Duy',
-        title: 'PPL Assignment 1',
-        start: '24/03/2025',
-        deadline: '24/05/2025',
-      },
-      {
-        id: '2',
-        avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
-        name: 'Nguyễn Hòa Phụng',
-        title: 'PPL Extends',
-        start: '30/03/2025',
-        deadline: '30/05/2025',
-      },
-      {
-        id: '3',
-        avatar: 'https://randomuser.me/api/portraits/men/4.jpg',
-        name: 'Hoàng Lê Hải Thanh',
-        title: 'Mobile Assignment 1',
-        start: '01/04/2025',
-        deadline: '15/04/2025',
-      },
-      {
-        id: '4',
-        avatar: 'https://randomuser.me/api/portraits/men/4.jpg',
-        name: 'Hoàng Lê Hải Thanh',
-        title: 'Mobile Assignment 2',
-        start: '15/04/2025',
-        deadline: '20/04/2025',
-      },
-    ]);
+    const fetchAssignments = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const userStr = await AsyncStorage.getItem('user');
+        if (!token || !userStr) return;
+        const user = JSON.parse(userStr);
+        // Lấy id từ user lưu trong bộ nhớ
+        const params = {
+          creator_id: user.id,
+          limit: 3,
+          offset: 3,
+          ordering: 'start',
+          search: 'tittle',
+        };
+        const queryString = Object.entries(params)
+          .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
+          .join('&');
+        const response = await fetch(`${API_URL}/assignments/?${queryString}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log('GET /assignments/ status:', response.status);
+        const data = await response.json();
+        console.log('API response data:', data);
+        const assignments = (data.results || []).map(item => ({
+          id: item.id.toString(),
+          name: `${item.creator_data.last_name} ${item.creator_data.first_name}`,
+          title: item.title,
+          start: new Date(item.start).toLocaleDateString('vi-VN'),
+          deadline: new Date(item.deadline).toLocaleDateString('vi-VN'),
+        }));
+        console.log('Assignments after map:', assignments);
+        setAssignments(assignments);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchAssignments();
   }, []);
 
   const filtered = assignments
@@ -84,7 +90,6 @@ export default function FolderScreen({ navigation }) {
               <Image source={require('../assets/icon.png')} style={styles.cardImg} />
               <View style={styles.cardContent}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                  <Image source={{ uri: item.avatar }} style={styles.cardAvatar} />
                   <Text style={styles.cardName}>{item.name}</Text>
                 </View>
                 <Text style={styles.cardTitle}>{item.title}</Text>

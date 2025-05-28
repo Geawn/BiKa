@@ -1,8 +1,50 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_ENDPOINTS } from '../config/api';
 
 const UserScreen = ({ navigation }) => {
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+
+      const data = await response.json();
+      setUserData(data);
+    } catch (error) {
+      console.error('Profile Error:', error);
+      Alert.alert('Lỗi', 'Không thể tải thông tin người dùng');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.multiRemove(['token', 'expiry', 'user']);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Splash' }],
+      });
+    } catch (error) {
+      console.error('Logout Error:', error);
+      Alert.alert('Lỗi', 'Có lỗi xảy ra khi đăng xuất');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -13,15 +55,21 @@ const UserScreen = ({ navigation }) => {
       
       <View style={styles.profileSection}>
         <Image
-          source={{ uri: 'https://randomuser.me/api/portraits/men/1.jpg' }}
+          source={{ uri: userData?.avatar || 'https://randomuser.me/api/portraits/men/1.jpg' }}
           style={styles.avatar}
         />
-        <Text style={styles.name}>John Doe</Text>
-        <Text style={styles.email}>john.doe@example.com</Text>
+        <Text style={styles.name}>
+          {userData ? `${userData.first_name} ${userData.last_name}`.trim() || 'Chưa cập nhật tên' : 'Loading...'}
+        </Text>
+        <Text style={styles.email}>{userData?.email || 'Loading...'}</Text>
+        <Text style={styles.role}>{userData?.role || 'Loading...'}</Text>
       </View>
 
       <View style={styles.menuSection}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('EditProfile')}
+        >
           <AntDesign name="user" size={24} color="#333" />
           <Text style={styles.menuText}>Edit Profile</Text>
         </TouchableOpacity>
@@ -31,7 +79,7 @@ const UserScreen = ({ navigation }) => {
           <Text style={styles.menuText}>Account Settings</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
           <AntDesign name="logout" size={24} color="#333" />
           <Text style={styles.menuText}>Logout</Text>
         </TouchableOpacity>
@@ -71,6 +119,12 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 16,
     color: '#666',
+    marginBottom: 4,
+  },
+  role: {
+    fontSize: 14,
+    color: '#888',
+    textTransform: 'capitalize',
   },
   menuSection: {
     padding: 16,

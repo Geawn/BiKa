@@ -1,16 +1,26 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SplashScreen = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('MainApp');
-    }, 2000); // 2 seconds delay
+    const checkToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          navigation.replace('MainApp');
+        } else {
+          navigation.replace('Login');
+        }
+      } catch (e) {
+        navigation.replace('Login');
+      }
+    };
 
-    return () => clearTimeout(timer);
+    checkToken();
   }, [navigation]);
 
   return (
