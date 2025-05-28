@@ -1,56 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import TopBar from '../components/TopBar';
 import { Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-
-const tasks = [
-  {
-    id: '1',
-    title: 'Phần 1.1 - Lịch sử Đảng',
-    description: 'Nghị quyết Đại hội Đại biểu toàn quốc lần thứ Nhất (3-1935)',
-  },
-  {
-    id: '2',
-    title: 'Hoàn thành Lexer - PPL',
-    description: 'Xây dựng bộ phân tích từ vựng (Lexical analysis)',
-  },
-  {
-    id: '3',
-    title: 'Hoàn thành AST Generation - PPL',
-    description: 'Xây dựng cây cú pháp trừu tượng',
-  },
-  {
-    id: '4',
-    title: 'Ôn thi Giữa kỳ PPL',
-    description: 'Ôn tập các phần trong thi giữa kỳ',
-  },
-  {
-    id: '5',
-    title: 'Làm Figma cho Mobile 2',
-    description: 'Hoàn chỉnh UI/UX cho Bika App',
-  },
-  {
-    id: '6',
-    title: 'Mobile 3: ReactNative',
-    description: 'Nhóm bắt đầu nghiên cứu và tìm hiểu ReactNative',
-  },
-];
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../config/api';
 
 export default function TaskScreen() {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortAsc, setSortAsc] = useState(true);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Đưa fetchTasks ra ngoài useEffect để có thể gọi lại khi cần
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      console.log('Bắt đầu lấy token từ AsyncStorage...');
+      const token = await AsyncStorage.getItem('token');
+      console.log('Token lấy được:', token ? '[Đã có token]' : '[Không có token]');
+      console.log('Gọi API /tasks/?offset=0 ...');
+      const response = await fetch(`${API_URL}/tasks/?offset=0`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Đã nhận response từ API, status:', response.status);
+      const data = await response.json();
+      const mappedTasks = (data.results || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        status: item.status,
+      }));
+      setTasks(mappedTasks);
+    } catch (error) {
+      console.log('Lỗi khi fetch tasks:', error);
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchTasks();
+    }, [])
+  );
 
   // Lọc và sắp xếp task
   const filteredTasks = tasks
     .filter(
       task =>
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description.toLowerCase().includes(searchQuery.toLowerCase())
+        (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()))
     )
     .sort((a, b) => {
-      // Nếu có trường date thì thay bằng a.date - b.date hoặc b.date - a.date
       if (sortAsc) {
         return a.title.localeCompare(b.title);
       } else {
@@ -73,21 +85,27 @@ export default function TaskScreen() {
           <Text style={styles.sortText}>{sortAsc ? 'A-Z' : 'Z-A'}</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={filteredTasks}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => navigation.navigate('TaskDetail', { task: item })}>
-            <View style={styles.taskItem}>
-              <Text style={styles.taskTitle}>{item.title}</Text>
-              <Text style={styles.taskDesc}>{item.description}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        contentContainerStyle={{ paddingBottom: 24 }}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <Text>Đang tải...</Text>
+      ) : (
+        <FlatList
+          data={filteredTasks}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => navigation.navigate('TaskDetail', { id: item.id })}>
+              <View style={styles.taskItem}>
+                <Text style={styles.taskTitle}>{item.title}</Text>
+                <Text style={styles.taskDesc}>{item.description}</Text>
+                {/* Có thể hiển thị status nếu muốn */}
+                {/* <Text style={{color: '#888', fontSize: 12}}>{item.status}</Text> */}
+              </View>
+            </TouchableOpacity>
+          )}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          contentContainerStyle={{ paddingBottom: 24 }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }

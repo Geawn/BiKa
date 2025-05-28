@@ -1,50 +1,176 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, ActivityIndicator, Alert, Platform } from 'react-native';
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 import TopBar from '../components/TopBar';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config/api';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function AssignmentDetailScreen({ route, navigation }) {
   const { assignment } = route.params;
   const [assignmentData, setAssignmentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState({
+    title: '',
+    description: '',
+    start: '',
+    deadline: ''
+  });
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
 
-  useEffect(() => {
-    const fetchAssignmentDetail = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        if (!token) return;
+  const fetchTasks = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
 
-        const response = await fetch(`${API_URL}/assignments/${assignment.id}/`, {
+      const taskRes = await fetch(
+        `${API_URL}/tasks/?assignment_id=${assignment.id}&limit=10&offset=0`,
+        {
           method: 'GET',
           headers: {
             'Authorization': `Token ${token}`,
             'Content-Type': 'application/json',
           },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setAssignmentData(data);
-          // TODO: Fetch tasks for this assignment
-          // For now using mock data
-          setTasks([
-            { id: '1', title: 'Hoàn thành Lexer - PPL', desc: 'Xây dựng bộ phân tích từ vựng (Lexical analysis)' },
-            { id: '2', title: 'Hoàn thành AST Generation - PPL', desc: 'Xây dựng cây cú pháp trừu tượng' },
-          ]);
         }
-      } catch (error) {
-        console.error('Error fetching assignment details:', error);
-      } finally {
-        setLoading(false);
+      );
+      if (taskRes.ok) {
+        const taskData = await taskRes.json();
+        setTasks(
+          taskData.results.map(task => ({
+            id: String(task.id),
+            title: task.title,
+            desc: task.description,
+            ...task,
+          }))
+        );
+      } else {
+        setTasks([]);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
+  };
 
+  const fetchAssignmentDetail = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${API_URL}/assignments/${assignment.id}/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAssignmentData(data);
+        console.log('Assignment title:', data.title);
+      }
+    } catch (error) {
+      console.error('Error fetching assignment details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchTasks();
+      fetchAssignmentDetail();
+    }, [])
+  );
+
+  useEffect(() => {
     fetchAssignmentDetail();
+    fetchTasks();
   }, [assignment.id]);
+
+  const handleUpdateAssignment = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${API_URL}/assignments/${assignment.id}/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          creator: assignmentData.creator,
+          title: editedData.title,
+          description: editedData.description,
+          start: editedData.start,
+          deadline: editedData.deadline
+        })
+      });
+
+      if (response.ok) {
+        const updatedData = await response.json();
+        setAssignmentData(updatedData);
+        setIsEditing(false);
+        Alert.alert('Success', 'Assignment updated successfully');
+      } else {
+        Alert.alert('Error', 'Failed to update assignment');
+      }
+    } catch (error) {
+      console.error('Error updating assignment:', error);
+      Alert.alert('Error', 'An error occurred while updating the assignment');
+    }
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const onStartDateChange = (event, selectedDate) => {
+    setShowStartPicker(false);
+    if (selectedDate) {
+      setStartDate(selectedDate);
+      setEditedData({
+        ...editedData,
+        start: selectedDate.toISOString()
+      });
+    }
+  };
+
+  const onEndDateChange = (event, selectedDate) => {
+    setShowEndPicker(false);
+    if (selectedDate) {
+      setEndDate(selectedDate);
+      setEditedData({
+        ...editedData,
+        deadline: selectedDate.toISOString()
+      });
+    }
+  };
+
+  const startEditing = () => {
+    const start = new Date(assignmentData.start);
+    const end = new Date(assignmentData.deadline);
+    setStartDate(start);
+    setEndDate(end);
+    setEditedData({
+      title: assignmentData.title,
+      description: assignmentData.description,
+      start: assignmentData.start,
+      deadline: assignmentData.deadline
+    });
+    setIsEditing(true);
+  };
 
   const renderHeader = () => (
     <>
@@ -52,11 +178,24 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <AntDesign name="arrowleft" size={24} color="#2d2d6a" />
         </TouchableOpacity>
-        <Text style={styles.title}>{assignmentData?.title || assignment.title}</Text>
+        {isEditing ? (
+          <TextInput
+            style={[styles.title, styles.editInput]}
+            value={editedData.title}
+            onChangeText={(text) => setEditedData({...editedData, title: text})}
+          />
+        ) : (
+          <Text style={styles.title}>{assignmentData?.title || assignment.title}</Text>
+        )}
+        {!isEditing && (
+          <TouchableOpacity onPress={startEditing} style={styles.editButton}>
+            <Feather name="edit" size={20} color="#2d2d6a" />
+          </TouchableOpacity>
+        )}
       </View>
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Tasks</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('CreateTaskScreen')}>
+        <TouchableOpacity onPress={() => navigation.navigate('CreateTaskScreen', { assignmentId: assignment.id })}>
           <AntDesign name="pluscircleo" size={20} color="#2d2d6a" />
         </TouchableOpacity>
       </View>
@@ -68,23 +207,18 @@ export default function AssignmentDetailScreen({ route, navigation }) {
       <View style={styles.infoBox}>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Description</Text>
-          <TouchableOpacity>
-            <Feather name="edit" size={18} color="#2d2d6a" />
-          </TouchableOpacity>
         </View>
         <TextInput
-          style={styles.infoInput}
-          value={assignmentData?.description || ''}
+          style={[styles.infoInput, isEditing && styles.editInput]}
+          value={isEditing ? editedData.description : (assignmentData?.description || '')}
           multiline
-          editable={false}
+          editable={isEditing}
+          onChangeText={(text) => isEditing && setEditedData({...editedData, description: text})}
         />
       </View>
       <View style={styles.infoBox}>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Creator</Text>
-          <TouchableOpacity>
-            <Feather name="edit" size={18} color="#2d2d6a" />
-          </TouchableOpacity>
         </View>
         <TextInput 
           style={styles.infoInput} 
@@ -95,34 +229,90 @@ export default function AssignmentDetailScreen({ route, navigation }) {
       <View style={styles.infoBox}>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Start time:</Text>
-          <TouchableOpacity>
-            <Feather name="edit" size={18} color="#2d2d6a" />
-          </TouchableOpacity>
         </View>
-        <TextInput 
-          style={styles.infoInput} 
-          value={assignmentData ? new Date(assignmentData.start).toLocaleDateString('vi-VN') : ''} 
-          editable={false} 
-        />
+        {isEditing ? (
+          <View>
+            <TouchableOpacity onPress={() => setShowStartPicker(true)}>
+              <TextInput
+                style={[styles.infoInput, styles.editInput]}
+                value={editedData.start ? formatDate(new Date(editedData.start)) : ''}
+                placeholder="DD/MM/YYYY"
+                editable={false}
+                pointerEvents="none"
+              />
+            </TouchableOpacity>
+            {showStartPicker && (
+              <DateTimePicker
+                value={startDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={onStartDateChange}
+                minimumDate={new Date()}
+              />
+            )}
+          </View>
+        ) : (
+          <TextInput 
+            style={styles.infoInput} 
+            value={assignmentData ? formatDate(new Date(assignmentData.start)) : ''} 
+            editable={false} 
+          />
+        )}
       </View>
       <View style={styles.infoBox}>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>End time:</Text>
-          <TouchableOpacity>
-            <Feather name="edit" size={18} color="#2d2d6a" />
+        </View>
+        {isEditing ? (
+          <View>
+            <TouchableOpacity onPress={() => setShowEndPicker(true)}>
+              <TextInput
+                style={[styles.infoInput, styles.editInput]}
+                value={editedData.deadline ? formatDate(new Date(editedData.deadline)) : ''}
+                placeholder="DD/MM/YYYY"
+                editable={false}
+                pointerEvents="none"
+              />
+            </TouchableOpacity>
+            {showEndPicker && (
+              <DateTimePicker
+                value={endDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={onEndDateChange}
+                minimumDate={startDate}
+              />
+            )}
+          </View>
+        ) : (
+          <TextInput 
+            style={styles.infoInput} 
+            value={assignmentData ? formatDate(new Date(assignmentData.deadline)) : ''} 
+            editable={false} 
+          />
+        )}
+      </View>
+      {isEditing && (
+        <View style={styles.editButtons}>
+          <TouchableOpacity 
+            style={[styles.editButton, styles.saveButton]} 
+            onPress={handleUpdateAssignment}
+          >
+            <Text style={styles.buttonText}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.editButton, styles.cancelButton]} 
+            onPress={() => setIsEditing(false)}
+          >
+            <Text style={styles.buttonText}>Cancel</Text>
           </TouchableOpacity>
         </View>
-        <TextInput 
-          style={styles.infoInput} 
-          value={assignmentData ? new Date(assignmentData.deadline).toLocaleDateString('vi-VN') : ''} 
-          editable={false} 
-        />
-      </View>
+      )}
     </>
   );
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('TaskDetail', { task: item })}>
+    <TouchableOpacity onPress={() => navigation.navigate('TaskDetail', { id: item.id })}>
       <View style={styles.taskItem}>
         <Text style={styles.taskTitle}>{item.title}</Text>
         <Text style={styles.taskDesc}>{item.desc}</Text>
@@ -186,4 +376,30 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   infoLabel: { fontWeight: 'bold', color: '#2d2d6a' },
   infoInput: { backgroundColor: '#f8fafc', borderRadius: 6, padding: 8, color: '#222', marginTop: 2 },
+  editInput: {
+    borderWidth: 1,
+    borderColor: '#2d2d6a',
+    backgroundColor: '#fff',
+    padding: 12,
+  },
+  editButton: {
+    padding: 8,
+    borderRadius: 4,
+  },
+  editButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 16,
+    gap: 8,
+  },
+  saveButton: {
+    backgroundColor: '#2d2d6a',
+  },
+  cancelButton: {
+    backgroundColor: '#666',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 }); 

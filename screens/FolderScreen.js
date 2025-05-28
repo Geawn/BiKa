@@ -37,15 +37,15 @@ export default function FolderScreen({ navigation }) {
         });
         console.log('GET /assignments/ status:', response.status);
         const data = await response.json();
-        console.log('API response data:', data);
-        const assignments = (data.results || []).map(item => ({
-          id: item.id.toString(),
-          name: `${item.creator_data.last_name} ${item.creator_data.first_name}`,
-          title: item.title,
+    //    console.log('API response data:', data);
+       const assignments = (data.results || []).map(item => ({
+         id: item.id.toString(),
+         name: `${item.creator_data.last_name} ${item.creator_data.first_name}`,
+         title: item.title,
           start: new Date(item.start).toLocaleDateString('vi-VN'),
           deadline: new Date(item.deadline).toLocaleDateString('vi-VN'),
-        }));
-        console.log('Assignments after map:', assignments);
+       }));
+     //   console.log('Assignments after map:', assignments);
         setAssignments(assignments);
       } catch (error) {
         console.error(error);

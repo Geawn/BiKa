@@ -24,87 +24,91 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from './screens/SplashScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function TabNavigator() {
   return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: 'gray',
-        tabBarStyle: {
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
-          position: 'absolute',
-          bottom: 40,
-          left: 20,
-          right: 20,
-          elevation: 0,
-          backgroundColor: '#ffffff',
-          borderRadius: 15,
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: 2,
+    <SafeAreaView style={{ flex: 1 }}>
+      <Tab.Navigator
+        screenOptions={{
+          tabBarActiveTintColor: '#007AFF',
+          tabBarInactiveTintColor: 'gray',
+          tabBarStyle: {
+            paddingBottom: 5,
+            paddingTop: 5,
+            height: 60,
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            elevation: 0,
+            backgroundColor: '#ffffff',
+            borderTopWidth: 1,
+            borderTopColor: '#e0e0e0',
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: -2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
           },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-        },
-        headerShown: false,
-      }}>
-      <Tab.Screen
-        name="HomeTab"
-        component={HomeScreen}
-        options={{
-          tabBarLabel: 'Trang chủ',
-          tabBarIcon: ({ color, size }) => (
-            <AntDesign name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Folder"
-        component={FolderScreen}
-        options={{
-          tabBarLabel: 'Assignment',
-          tabBarIcon: ({ color, size }) => (
-            <AntDesign name="folderopen" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Utility"
-        component={TaskScreen}
-        options={{
-          tabBarLabel: 'Task',
-          tabBarIcon: ({ color, size }) => (
-            <AntDesign name="laptop" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={UtilityScreen}
-        options={{
-          tabBarLabel: 'Tiện ích',
-          tabBarIcon: ({ color, size }) => (
-            <AntDesign name="appstore-o" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Notification"
-        component={NotificationScreen}
-        options={{
-          tabBarLabel: 'Thông báo',
-          tabBarIcon: ({ color, size }) => (
-            <AntDesign name="bells" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
+          headerShown: false,
+        }}>
+        <Tab.Screen
+          name="HomeTab"
+          component={HomeScreen}
+          options={{
+            tabBarLabel: 'Trang chủ',
+            tabBarIcon: ({ color, size }) => (
+              <AntDesign name="home" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Folder"
+          component={FolderScreen}
+          options={{
+            tabBarLabel: 'Assignment',
+            tabBarIcon: ({ color, size }) => (
+              <AntDesign name="folderopen" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Utility"
+          component={TaskScreen}
+          options={{
+            tabBarLabel: 'Task',
+            tabBarIcon: ({ color, size }) => (
+              <AntDesign name="laptop" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Settings"
+          component={UtilityScreen}
+          options={{
+            tabBarLabel: 'Tiện ích',
+            tabBarIcon: ({ color, size }) => (
+              <AntDesign name="appstore-o" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Notification"
+          component={NotificationScreen}
+          options={{
+            tabBarLabel: 'Thông báo',
+            tabBarIcon: ({ color, size }) => (
+              <AntDesign name="bells" size={size} color={color} />
+            ),
+          }}
+        />
+      </Tab.Navigator>
+    </SafeAreaView>
   );
 }
 
@@ -127,38 +131,13 @@ export default function App() {
   }
 
   return (
-    <Provider store={store}>
-      <NavigationContainer>
-        <Stack.Navigator 
-         initialRouteName={isFirstLaunch ? "Onboarding" : "Splash"} // bật dòng này, tắt dòng dưới để bật login log out
-         //   initialRouteName="MainApp"
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: '#99D2E6',
-              height: 32,
-            },
-            headerTintColor: '#2d2d6a',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-            headerShown: true,
-          }}
-        >
-          <Stack.Screen
-            name="Onboarding"
-            component={OnboardingScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Splash"
-            component={SplashScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen 
-            name="EditProfile" 
-            component={EditProfileScreen}
-            options={{
-              title: 'Chỉnh sửa thông tin',
+    <SafeAreaProvider>
+      <Provider store={store}>
+        <NavigationContainer>
+          <Stack.Navigator 
+           initialRouteName={isFirstLaunch ? "Onboarding" : "Splash"} // bật dòng này, tắt dòng dưới để bật login log out
+           //   initialRouteName="MainApp"
+            screenOptions={{
               headerStyle: {
                 backgroundColor: '#99D2E6',
                 height: 32,
@@ -167,78 +146,105 @@ export default function App() {
               headerTitleStyle: {
                 fontWeight: 'bold',
               },
-              headerLeft: () => null
-            }}
-          />
-          <Stack.Screen 
-            name="MainApp" 
-            component={TabNavigator} 
-            options={{ 
               headerShown: true,
-              headerLeft: () => null
-            }} 
-          />
-          <Stack.Screen 
-            name="UserScreen" 
-            component={UserScreen}
-            options={{
-              title: 'User Profile',
-              headerLeft: () => null
             }}
-          />
-          <Stack.Screen 
-            name="SettingsScreen" 
-            component={SettingsScreen}
-            options={{
-              title: 'Settings',
-              headerLeft: () => null
-            }}
-          />
-          <Stack.Screen 
-            name="AssignmentDetailScreen" 
-            component={AssignmentDetailScreen}
-            options={{
-              title: 'Chi tiết bài tập',
-              headerLeft: () => null
-            }}
-          />
-          <Stack.Screen 
-            name="CreateAssignment" 
-            component={CreateAssignmentScreen}
-            options={{
-              headerLeft: () => null
-            }}
-          />
-          <Stack.Screen 
-            name="CreateTaskScreen" 
-            component={CreateTaskScreen}
-            options={{
-              title: 'Tạo Task',
-              headerLeft: () => null
-            }}
-          />
-          <Stack.Screen name="Tasks" component={TaskScreen} />
-          <Stack.Screen 
-            name="TaskDetail" 
-            component={TaskDetailScreen} 
-            options={{
-              title: 'Chi tiết Task',
-              headerLeft: () => null,
-              headerShown: true
-            }}
-          />
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="SignUp"
-            component={SignUpScreen}
-            options={{ headerShown: false }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </Provider>
+          >
+            <Stack.Screen
+              name="Onboarding"
+              component={OnboardingScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Splash"
+              component={SplashScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+              name="EditProfile" 
+              component={EditProfileScreen}
+              options={{
+                title: 'Chỉnh sửa thông tin',
+                headerStyle: {
+                  backgroundColor: '#99D2E6',
+                  height: 32,
+                },
+                headerTintColor: '#2d2d6a',
+                headerTitleStyle: {
+                  fontWeight: 'bold',
+                },
+                headerLeft: () => null
+              }}
+            />
+            <Stack.Screen 
+              name="MainApp" 
+              component={TabNavigator} 
+              options={{ 
+                headerShown: true,
+                headerLeft: () => null
+              }} 
+            />
+            <Stack.Screen 
+              name="UserScreen" 
+              component={UserScreen}
+              options={{
+                title: 'User Profile',
+                headerLeft: () => null
+              }}
+            />
+            <Stack.Screen 
+              name="SettingsScreen" 
+              component={SettingsScreen}
+              options={{
+                title: 'Settings',
+                headerLeft: () => null
+              }}
+            />
+            <Stack.Screen 
+              name="AssignmentDetailScreen" 
+              component={AssignmentDetailScreen}
+              options={{
+                title: 'Chi tiết bài tập',
+                headerLeft: () => null
+              }}
+            />
+            <Stack.Screen 
+              name="CreateAssignment" 
+              component={CreateAssignmentScreen}
+              options={{
+                headerLeft: () => null
+              }}
+            />
+            <Stack.Screen 
+              name="CreateTaskScreen" 
+              component={CreateTaskScreen}
+              options={{
+                title: 'Tạo Task',
+                headerLeft: () => null
+              }}
+            />
+            <Stack.Screen name="Tasks" component={TaskScreen} />
+            <Stack.Screen 
+              name="TaskDetail" 
+              component={TaskDetailScreen} 
+              options={{
+                title: 'Chi tiết Task',
+                headerLeft: () => null,
+                headerShown: true
+              }}
+            />
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="SignUp"
+              component={SignUpScreen}
+              options={{ headerShown: false }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </Provider>
+    </SafeAreaProvider>
   );
 }

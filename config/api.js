@@ -5,5 +5,6 @@ export const API_ENDPOINTS = {
   REGISTER: `${API_URL}/auth/register/`,
   CREATE_ASSIGNMENT: `${API_URL}/assignments/`,
   USER_PROFILE: `${API_URL}/users/profile/`,
+  TASK_COMPLETION_PERCENTAGE: `${API_URL}/tasks/percent-completed/`,
   // Add other endpoints as needed
 }; 

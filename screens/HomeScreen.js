@@ -11,6 +11,7 @@ import {
   Alert
 } from 'react-native';
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
+import { API_ENDPOINTS } from '../config/api';
 
 const HomeScreen = ({ navigation }) => {
   const [completionPercentage, setCompletionPercentage] = useState(0);
@@ -38,13 +39,12 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchCompletionPercentage = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        // Mock data - replace with actual API call
-        const mockApiResponse = { percentage: 75 };
-        setCompletionPercentage(mockApiResponse.percentage);
+        const response = await fetch(API_ENDPOINTS.TASK_COMPLETION_PERCENTAGE);
+        const data = await response.json();
+        setCompletionPercentage(parseFloat(data.percent_completed));
       } catch (error) {
         console.error('Error fetching completion percentage:', error);
+        Alert.alert('Error', 'Failed to fetch completion percentage');
       } finally {
         setLoading(false);
       }
