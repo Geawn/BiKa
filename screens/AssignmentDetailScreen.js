@@ -1,17 +1,50 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, ActivityIndicator } from 'react-native';
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 import TopBar from '../components/TopBar';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../config/api';
 
 export default function AssignmentDetailScreen({ route, navigation }) {
   const { assignment } = route.params;
-  // Mock tasks, description
-  const tasks = [
-    { id: '1', title: 'Hoàn thành Lexer - PPL', desc: 'Xây dựng bộ phân tích từ vựng (Lexical analysis)' },
-    { id: '2', title: 'Hoàn thành AST Generation - PPL', desc: 'Xây dựng cây cú pháp trừu tượng' },
-  ];
-  const description = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
+  const [assignmentData, setAssignmentData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    const fetchAssignmentDetail = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch(`${API_URL}/assignments/${assignment.id}/`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setAssignmentData(data);
+          // TODO: Fetch tasks for this assignment
+          // For now using mock data
+          setTasks([
+            { id: '1', title: 'Hoàn thành Lexer - PPL', desc: 'Xây dựng bộ phân tích từ vựng (Lexical analysis)' },
+            { id: '2', title: 'Hoàn thành AST Generation - PPL', desc: 'Xây dựng cây cú pháp trừu tượng' },
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching assignment details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssignmentDetail();
+  }, [assignment.id]);
 
   const renderHeader = () => (
     <>
@@ -19,7 +52,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <AntDesign name="arrowleft" size={24} color="#2d2d6a" />
         </TouchableOpacity>
-        <Text style={styles.title}>{assignment.title}</Text>
+        <Text style={styles.title}>{assignmentData?.title || assignment.title}</Text>
       </View>
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Tasks</Text>
@@ -41,7 +74,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         </View>
         <TextInput
           style={styles.infoInput}
-          value={description}
+          value={assignmentData?.description || ''}
           multiline
           editable={false}
         />
@@ -53,7 +86,11 @@ export default function AssignmentDetailScreen({ route, navigation }) {
             <Feather name="edit" size={18} color="#2d2d6a" />
           </TouchableOpacity>
         </View>
-        <TextInput style={styles.infoInput} value={assignment.name} editable={false} />
+        <TextInput 
+          style={styles.infoInput} 
+          value={assignmentData ? `${assignmentData.creator_data.last_name} ${assignmentData.creator_data.first_name}` : ''} 
+          editable={false} 
+        />
       </View>
       <View style={styles.infoBox}>
         <View style={styles.infoRow}>
@@ -62,7 +99,11 @@ export default function AssignmentDetailScreen({ route, navigation }) {
             <Feather name="edit" size={18} color="#2d2d6a" />
           </TouchableOpacity>
         </View>
-        <TextInput style={styles.infoInput} value={assignment.start} editable={false} />
+        <TextInput 
+          style={styles.infoInput} 
+          value={assignmentData ? new Date(assignmentData.start).toLocaleDateString('vi-VN') : ''} 
+          editable={false} 
+        />
       </View>
       <View style={styles.infoBox}>
         <View style={styles.infoRow}>
@@ -71,7 +112,11 @@ export default function AssignmentDetailScreen({ route, navigation }) {
             <Feather name="edit" size={18} color="#2d2d6a" />
           </TouchableOpacity>
         </View>
-        <TextInput style={styles.infoInput} value={assignment.deadline} editable={false} />
+        <TextInput 
+          style={styles.infoInput} 
+          value={assignmentData ? new Date(assignmentData.deadline).toLocaleDateString('vi-VN') : ''} 
+          editable={false} 
+        />
       </View>
     </>
   );
@@ -86,6 +131,14 @@ export default function AssignmentDetailScreen({ route, navigation }) {
   );
 
   const renderFooter = () => renderInfoSection();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#2d2d6a" />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff', padding: 16 }}>

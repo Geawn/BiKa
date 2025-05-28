@@ -175,6 +175,7 @@ export default function App() {
             component={TabNavigator} 
             options={{ 
               headerShown: true,
+              headerLeft: () => null
             }} 
           />
           <Stack.Screen 

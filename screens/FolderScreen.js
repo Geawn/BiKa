@@ -20,10 +20,10 @@ export default function FolderScreen({ navigation }) {
         // Lấy id từ user lưu trong bộ nhớ
         const params = {
           creator_id: user.id,
-          limit: 3,
-          offset: 3,
+          limit: 10,
+          offset: 0,
           ordering: 'start',
-          search: 'tittle',
+          search: '',
         };
         const queryString = Object.entries(params)
           .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
@@ -31,7 +31,7 @@ export default function FolderScreen({ navigation }) {
         const response = await fetch(`${API_URL}/assignments/?${queryString}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Token ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -85,7 +85,10 @@ export default function FolderScreen({ navigation }) {
         keyExtractor={item => item.id}
         numColumns={2}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => navigation.navigate('AssignmentDetailScreen', { assignment: item })} style={{ flex: 1 }}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AssignmentDetailScreen', { assignment: item })}
+            style={{ width: '48%', margin: '1%' }}
+          >
             <View style={styles.card}>
               <Image source={require('../assets/icon.png')} style={styles.cardImg} />
               <View style={styles.cardContent}>

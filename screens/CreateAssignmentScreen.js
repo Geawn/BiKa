@@ -4,6 +4,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { API_ENDPOINTS } from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
 
 export default function CreateAssignmentScreen({ navigation }) {
   const [title, setTitle] = useState('');
@@ -101,10 +102,8 @@ export default function CreateAssignmentScreen({ navigation }) {
       const response = await fetch(API_ENDPOINTS.CREATE_ASSIGNMENT, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Token ${token}`,
           'Content-Type': 'application/json',
-          'X-CSRFTOKEN': 'Z1tnUQ2PXG3TcLaebVOzsCwNF1jdqfAKShjHVKGQwvL5OHK9u2NEeFW4wTxOtGAI',
-          'accept': 'application/json',
         },
         body: JSON.stringify(requestBody),
       });
@@ -122,7 +121,7 @@ export default function CreateAssignmentScreen({ navigation }) {
       Alert.alert('Success', 'Assignment created successfully', [
         {
           text: 'OK',
-          onPress: () => navigation.navigate('FolderScreen'),
+          onPress: () => navigation.navigate('MainApp', { screen: 'Folder' }),
         },
       ]);
     } catch (error) {
