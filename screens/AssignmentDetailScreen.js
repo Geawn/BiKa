@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 import TopBar from '../components/TopBar';
+import { useNavigation } from '@react-navigation/native';
 
 export default function AssignmentDetailScreen({ route, navigation }) {
   const { assignment } = route.params;
@@ -12,6 +13,80 @@ export default function AssignmentDetailScreen({ route, navigation }) {
   ];
   const description = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
 
+  const renderHeader = () => (
+    <>
+      <View style={styles.titleContainer}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <AntDesign name="arrowleft" size={24} color="#2d2d6a" />
+        </TouchableOpacity>
+        <Text style={styles.title}>{assignment.title}</Text>
+      </View>
+      <View style={styles.sectionRow}>
+        <Text style={styles.sectionTitle}>Tasks</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('CreateTaskScreen')}>
+          <AntDesign name="pluscircleo" size={20} color="#2d2d6a" />
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+
+  const renderInfoSection = () => (
+    <>
+      <View style={styles.infoBox}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Description</Text>
+          <TouchableOpacity>
+            <Feather name="edit" size={18} color="#2d2d6a" />
+          </TouchableOpacity>
+        </View>
+        <TextInput
+          style={styles.infoInput}
+          value={description}
+          multiline
+          editable={false}
+        />
+      </View>
+      <View style={styles.infoBox}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Creator</Text>
+          <TouchableOpacity>
+            <Feather name="edit" size={18} color="#2d2d6a" />
+          </TouchableOpacity>
+        </View>
+        <TextInput style={styles.infoInput} value={assignment.name} editable={false} />
+      </View>
+      <View style={styles.infoBox}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Start time:</Text>
+          <TouchableOpacity>
+            <Feather name="edit" size={18} color="#2d2d6a" />
+          </TouchableOpacity>
+        </View>
+        <TextInput style={styles.infoInput} value={assignment.start} editable={false} />
+      </View>
+      <View style={styles.infoBox}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>End time:</Text>
+          <TouchableOpacity>
+            <Feather name="edit" size={18} color="#2d2d6a" />
+          </TouchableOpacity>
+        </View>
+        <TextInput style={styles.infoInput} value={assignment.deadline} editable={false} />
+      </View>
+    </>
+  );
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity onPress={() => navigation.navigate('TaskDetail', { task: item })}>
+      <View style={styles.taskItem}>
+        <Text style={styles.taskTitle}>{item.title}</Text>
+        <Text style={styles.taskDesc}>{item.desc}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderFooter = () => renderInfoSection();
+
   return (
     <View style={{ flex: 1, backgroundColor: '#fff', padding: 16 }}>
       <TopBar
@@ -20,69 +95,15 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         onAvatarPress={() => navigation.navigate('UserScreen')}
         onMenuPress={() => navigation.navigate('SettingsScreen')}
       />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.titleContainer}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <AntDesign name="arrowleft" size={24} color="#2d2d6a" />
-          </TouchableOpacity>
-          <Text style={styles.title}>{assignment.title}</Text>
-        </View>
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>Tasks</Text>
-          <TouchableOpacity>
-            <AntDesign name="pluscircleo" size={20} color="#2d2d6a" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.taskList}>
-          {tasks.map(task => (
-            <View key={task.id} style={styles.taskItem}>
-              <Text style={styles.taskTitle}>{task.title}</Text>
-              <Text style={styles.taskDesc}>{task.desc}</Text>
-            </View>
-          ))}
-        </View>
-        <View style={styles.infoBox}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Description</Text>
-            <TouchableOpacity>
-              <Feather name="edit" size={18} color="#2d2d6a" />
-            </TouchableOpacity>
-          </View>
-          <TextInput
-            style={styles.infoInput}
-            value={description}
-            multiline
-            editable={false}
-          />
-        </View>
-        <View style={styles.infoBox}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Creator</Text>
-            <TouchableOpacity>
-              <Feather name="edit" size={18} color="#2d2d6a" />
-            </TouchableOpacity>
-          </View>
-          <TextInput style={styles.infoInput} value={assignment.name} editable={false} />
-        </View>
-        <View style={styles.infoBox}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Start time:</Text>
-            <TouchableOpacity>
-              <Feather name="edit" size={18} color="#2d2d6a" />
-            </TouchableOpacity>
-          </View>
-          <TextInput style={styles.infoInput} value={assignment.start} editable={false} />
-        </View>
-        <View style={styles.infoBox}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>End time:</Text>
-            <TouchableOpacity>
-              <Feather name="edit" size={18} color="#2d2d6a" />
-            </TouchableOpacity>
-          </View>
-          <TextInput style={styles.infoInput} value={assignment.deadline} editable={false} />
-        </View>
-      </ScrollView>
+      <FlatList
+        data={tasks}
+        keyExtractor={item => item.id}
+        renderItem={renderItem}
+        ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 16 }}
+      />
     </View>
   );
 }

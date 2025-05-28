@@ -30,7 +30,7 @@ export default function TopBar({ searchQuery, setSearchQuery, onAvatarPress, onM
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, marginTop: 16 },
   searchContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#f5f5f5', borderRadius: 10, paddingHorizontal: 12, marginRight: 12 },
   searchIcon: { marginRight: 8 },
   searchInput: { flex: 1, height: 40, fontSize: 16 },

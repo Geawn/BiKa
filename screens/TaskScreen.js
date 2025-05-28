@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import TopBar from '../components/TopBar';
 import { Feather } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const tasks = [
   {
@@ -37,6 +38,7 @@ const tasks = [
 ];
 
 export default function TaskScreen() {
+  const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortAsc, setSortAsc] = useState(true);
 
@@ -75,10 +77,12 @@ export default function TaskScreen() {
         data={filteredTasks}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <View style={styles.taskItem}>
-            <Text style={styles.taskTitle}>{item.title}</Text>
-            <Text style={styles.taskDesc}>{item.description}</Text>
-          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('TaskDetail', { task: item })}>
+            <View style={styles.taskItem}>
+              <Text style={styles.taskTitle}>{item.title}</Text>
+              <Text style={styles.taskDesc}>{item.description}</Text>
+            </View>
+          </TouchableOpacity>
         )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={{ paddingBottom: 24 }}

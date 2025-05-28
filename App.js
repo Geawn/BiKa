@@ -16,6 +16,8 @@ import NotificationScreen from './screens/NotificationScreen';
 import UserScreen from './screens/UserScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import AssignmentDetailScreen from './screens/AssignmentDetailScreen';
+import CreateTaskScreen from './screens/CreateTaskScreen';
+import TaskDetailScreen from './screens/TaskDetailScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -154,6 +156,24 @@ export default function App() {
             component={CreateAssignmentScreen}
             options={{
               headerLeft: () => null
+            }}
+          />
+          <Stack.Screen 
+            name="CreateTaskScreen" 
+            component={CreateTaskScreen}
+            options={{
+              title: 'Tạo Task',
+              headerLeft: () => null
+            }}
+          />
+          <Stack.Screen name="Tasks" component={TaskScreen} />
+          <Stack.Screen 
+            name="TaskDetail" 
+            component={TaskDetailScreen} 
+            options={{
+              title: 'Chi tiết Task',
+              headerLeft: () => null,
+              headerShown: true
             }}
           />
         </Stack.Navigator>
