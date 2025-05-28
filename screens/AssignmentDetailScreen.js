@@ -128,6 +128,53 @@ export default function AssignmentDetailScreen({ route, navigation }) {
     }
   };
 
+  const handleDelete = async () => {
+    Alert.alert(
+      'Xác nhận xóa',
+      'Bạn có chắc chắn muốn xóa assignment này?',
+      [
+        {
+          text: 'Hủy',
+          style: 'cancel'
+        },
+        {
+          text: 'Xóa',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('token');
+              if (!token) {
+                Alert.alert('Error', 'Authentication required');
+                return;
+              }
+
+              const response = await fetch(`${API_URL}/assignments/${assignment.id}/`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Token ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to delete assignment');
+              }
+
+              Alert.alert('Success', 'Assignment deleted successfully');
+              navigation.navigate('MainApp', {
+                screen: 'Folder',
+                params: { refresh: true }
+              });
+            } catch (error) {
+              console.error('Error deleting assignment:', error);
+              Alert.alert('Error', 'Failed to delete assignment');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const formatDate = (date) => {
     return date.toLocaleDateString('vi-VN', {
       day: '2-digit',
@@ -188,9 +235,14 @@ export default function AssignmentDetailScreen({ route, navigation }) {
           <Text style={styles.title}>{assignmentData?.title || assignment.title}</Text>
         )}
         {!isEditing && (
-          <TouchableOpacity onPress={startEditing} style={styles.editButton}>
-            <Feather name="edit" size={20} color="#2d2d6a" />
-          </TouchableOpacity>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity onPress={startEditing} style={styles.editButton}>
+              <Feather name="edit" size={20} color="#2d2d6a" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+              <AntDesign name="delete" size={20} color="#ff3b30" />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
       <View style={styles.sectionRow}>
@@ -401,5 +453,13 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 8,
   },
 }); 

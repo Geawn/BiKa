@@ -12,16 +12,13 @@ import {
 } from 'react-native';
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 import { API_ENDPOINTS } from '../config/api';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = ({ navigation }) => {
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [recentItems, setRecentItems] = useState([
-    { id: '1', title: 'PPL', date: new Date(2023, 7, 22) },
-    { id: '2', title: '8/3', date: new Date(2023, 7, 20) },
-    { id: '3', title: 'Mail cho Khoa', date: new Date(2023, 7, 18) },
-    { id: '4', title: 'Làm Quizz GT2', date: new Date(2023, 7, 15) },
-  ]);
+  const [tasks, setTasks] = useState([]);
   const [sortAscending, setSortAscending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMenu, setShowMenu] = useState(false);
@@ -35,29 +32,64 @@ const HomeScreen = ({ navigation }) => {
     return new Date(now.getFullYear(), now.getMonth(), diff);
   });
 
-  // Fetch completion percentage from API
-  useEffect(() => {
-    const fetchCompletionPercentage = async () => {
-      try {
-        const response = await fetch(API_ENDPOINTS.TASK_COMPLETION_PERCENTAGE);
-        const data = await response.json();
-        setCompletionPercentage(parseFloat(data.percent_completed));
-      } catch (error) {
-        console.error('Error fetching completion percentage:', error);
-        Alert.alert('Error', 'Failed to fetch completion percentage');
-      } finally {
-        setLoading(false);
+  // Fetch tasks from API
+  const fetchTasks = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (!userData) {
+        Alert.alert('Error', 'User data not found');
+        return;
       }
-    };
+      const user = JSON.parse(userData);
+      const userId = user.id;
 
+      const response = await fetch(
+        `${API_ENDPOINTS.TASKS}?offset=0&assignee_id=${userId}&limit=7&ordering=created`
+      );
+      const data = await response.json();
+      setTasks(data.results);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      Alert.alert('Error', 'Failed to fetch tasks');
+    }
+  };
+
+  // Fetch completion percentage from API
+  const fetchCompletionPercentage = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(API_ENDPOINTS.TASK_COMPLETION_PERCENTAGE);
+      const data = await response.json();
+      setCompletionPercentage(parseFloat(data.percent_completed));
+    } catch (error) {
+      console.error('Error fetching completion percentage:', error);
+      Alert.alert('Error', 'Failed to fetch completion percentage');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Use useFocusEffect to reload data when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchCompletionPercentage();
+      fetchTasks();
+    }, [])
+  );
+
+  // Initial load
+  useEffect(() => {
     fetchCompletionPercentage();
+    fetchTasks();
   }, []);
 
-  // Sort recent items by date
-  const sortedItems = [...recentItems].sort((a, b) => {
+  // Sort tasks by date
+  const sortedTasks = [...tasks].sort((a, b) => {
+    const dateA = new Date(a.created);
+    const dateB = new Date(b.created);
     return sortAscending 
-      ? a.date.getTime() - b.date.getTime() 
-      : b.date.getTime() - a.date.getTime();
+      ? dateA.getTime() - dateB.getTime() 
+      : dateB.getTime() - dateA.getTime();
   });
 
   // Format date as "Day MONTH" (e.g., "22 MAR")
@@ -150,9 +182,12 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const renderRecentItem = ({ item }) => (
-    <View style={styles.recentItem}>
+    <TouchableOpacity 
+      style={styles.recentItem}
+      onPress={() => navigation.navigate('TaskDetail', { id: item.id })}
+    >
       <Text style={styles.recentItemText}>+ {item.title}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   // Lấy 7 ngày liên tiếp bắt đầu từ currentWeekStart
@@ -202,6 +237,10 @@ const HomeScreen = ({ navigation }) => {
         ]}>{['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][item.date.getDay()]}</Text>
       </TouchableOpacity>
     );
+  };
+
+  const handleReload = () => {
+    fetchTasks();
   };
 
   if (loading) {
@@ -271,15 +310,20 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.recentContainer}>
         <View style={styles.recentHeader}>
           <Text style={styles.recentTitle}>Recent Items</Text>
-          <TouchableOpacity onPress={toggleSort} style={styles.sortButton}>
-            <AntDesign name={sortAscending ? "arrowup" : "arrowdown"} size={16} color="black" />
-          </TouchableOpacity>
+          <View style={styles.recentHeaderButtons}>
+            <TouchableOpacity onPress={handleReload} style={styles.reloadButton}>
+              <AntDesign name="reload1" size={16} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={toggleSort} style={styles.sortButton}>
+              <AntDesign name={sortAscending ? "arrowup" : "arrowdown"} size={16} color="black" />
+            </TouchableOpacity>
+          </View>
         </View>
         
         <FlatList
-          data={sortedItems}
+          data={sortedTasks}
           renderItem={renderRecentItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.recentList}
         />
       </View>
@@ -410,6 +454,14 @@ const styles = StyleSheet.create({
   recentTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  recentHeaderButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  reloadButton: {
+    padding: 8,
+    marginRight: 8,
   },
   sortButton: {
     padding: 8,

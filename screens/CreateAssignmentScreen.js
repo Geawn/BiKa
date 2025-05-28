@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, Alert, Platform } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { API_ENDPOINTS } from '../config/api';
@@ -8,7 +8,6 @@ import { useNavigation } from '@react-navigation/native';
 
 export default function CreateAssignmentScreen({ navigation }) {
   const [title, setTitle] = useState('');
-  const [creator, setCreator] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [description, setDescription] = useState('');
@@ -17,21 +16,6 @@ export default function CreateAssignmentScreen({ navigation }) {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-
-  useEffect(() => {
-    const loadUserInfo = async () => {
-      try {
-        const userStr = await AsyncStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          setCreator(`${user.last_name} ${user.first_name}`);
-        }
-      } catch (error) {
-        console.error('Error loading user info:', error);
-      }
-    };
-    loadUserInfo();
-  }, []);
 
   const formatDate = (date) => {
     return date.toLocaleDateString('vi-VN', {
@@ -87,7 +71,7 @@ export default function CreateAssignmentScreen({ navigation }) {
       }
 
       const user = JSON.parse(userStr);
-      console.log('User info loaded:', { userId: user.id, userName: creator });
+      console.log('User info loaded:', { userId: user.id });
 
       const requestBody = {
         creator: user.id,
@@ -146,12 +130,6 @@ export default function CreateAssignmentScreen({ navigation }) {
           value={title}
           onChangeText={setTitle}
           placeholder="Enter title"
-        />
-        <Text style={styles.label}>Creator<Text style={{ color: 'red' }}>*</Text></Text>
-        <TextInput
-          style={[styles.input, { color: '#bdbdbd' }]}
-          value={creator}
-          editable={false}
         />
         <View style={styles.row}>
           <View style={{ flex: 1, marginRight: 8 }}>

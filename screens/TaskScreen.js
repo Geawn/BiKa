@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import TopBar from '../components/TopBar';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -12,6 +12,21 @@ export default function TaskScreen() {
   const [sortAsc, setSortAsc] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch user ID from AsyncStorage
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        setUserId(storedUserId);
+      } catch (error) {
+        console.log('Error fetching user ID:', error);
+      }
+    };
+    getUserId();
+  }, []);
 
   // Đưa fetchTasks ra ngoài useEffect để có thể gọi lại khi cần
   const fetchTasks = async () => {
@@ -35,6 +50,7 @@ export default function TaskScreen() {
         title: item.title,
         description: item.description,
         status: item.status,
+        assignee_id: userId, // Thêm assignee_id từ userId đã lưu
       }));
       setTasks(mappedTasks);
     } catch (error) {
@@ -54,6 +70,11 @@ export default function TaskScreen() {
       fetchTasks();
     }, [])
   );
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchTasks().finally(() => setRefreshing(false));
+  }, []);
 
   // Lọc và sắp xếp task
   const filteredTasks = tasks
@@ -75,8 +96,8 @@ export default function TaskScreen() {
       <TopBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        onAvatarPress={() => {}}
-        onMenuPress={() => {}}
+        onAvatarPress={() => navigation.navigate('UserScreen')}
+        onMenuPress={() => navigation.navigate('SettingsScreen')}
       />
       <View style={styles.headerRow}>
         <Text style={styles.title}>Tasks</Text>
@@ -91,6 +112,14 @@ export default function TaskScreen() {
         <FlatList
           data={filteredTasks}
           keyExtractor={item => item.id.toString()}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#2d2d6a']}
+              tintColor="#2d2d6a"
+            />
+          }
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => navigation.navigate('TaskDetail', { id: item.id })}>
               <View style={styles.taskItem}>

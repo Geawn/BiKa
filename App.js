@@ -33,7 +33,7 @@ function TabNavigator() {
     <SafeAreaView style={{ flex: 1 }}>
       <Tab.Navigator
         screenOptions={{
-          tabBarActiveTintColor: '#007AFF',
+          tabBarActiveTintColor: '#007AFf',
           tabBarInactiveTintColor: 'gray',
           tabBarStyle: {
             paddingBottom: 5,
@@ -116,6 +116,11 @@ export default function App() {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
 
   useEffect(() => {
+    // Clear AsyncStorage in development mode
+    //if (__DEV__) {
+   //   AsyncStorage.clear();
+//}
+    
     AsyncStorage.getItem('alreadyLaunched').then(value => {
       if (value === null) {
         AsyncStorage.setItem('alreadyLaunched', 'true');

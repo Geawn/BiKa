@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { AntDesign, Feather } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
 export default function SignUpScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
@@ -8,6 +11,49 @@ export default function SignUpScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSignUp = async () => {
+    // Validate input
+    if (!firstName || !lastName || !email || !password) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(API_ENDPOINTS.REGISTER, {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        password: password.trim()
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        // Lưu token và user info vào AsyncStorage
+        await AsyncStorage.setItem('token', response.data.token);
+        await AsyncStorage.setItem('expiry', response.data.expiry.toString());
+        await AsyncStorage.setItem('user', JSON.stringify({
+          id: response.data.user.id,
+          firstName: response.data.user.first_name,
+          lastName: response.data.user.last_name,
+          email: response.data.user.email,
+          role: response.data.user.role,
+          avatar: response.data.user.avatar,
+          lastLogin: response.data.user.last_login,
+          created: response.data.user.created,
+          modified: response.data.user.modified
+        }));
+        // Chuyển về HomeScreen
+        navigation.replace('MainApp');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      Alert.alert('Đăng ký thất bại', 'Email đã tồn tại hoặc có lỗi xảy ra!');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -78,8 +124,12 @@ export default function SignUpScreen({ navigation }) {
       {/* Hint */}
       <Text style={styles.hint}>Swipe to the side to fill in all the fields</Text>
       {/* Continue Button */}
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Continue</Text>
+      <TouchableOpacity 
+        style={styles.button}
+        onPress={handleSignUp}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>{loading ? 'Đang đăng ký...' : 'Continue'}</Text>
       </TouchableOpacity>
       {/* Login Link */}
       <Text style={styles.loginText}>

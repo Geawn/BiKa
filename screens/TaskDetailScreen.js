@@ -17,6 +17,7 @@ export default function TaskDetailScreen({ route, navigation }) {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
+  const [assignee, setAssignee] = useState('');
 
   const statusOptions = [
     { value: 'backlog', label: 'In Backlog' },
@@ -114,6 +115,7 @@ export default function TaskDetailScreen({ route, navigation }) {
     console.log('Parsed dates - Start:', start, 'End:', end);
     setStartDate(start);
     setEndDate(end);
+    setAssignee(task.assignee || '');
     const initialEditData = {
       ...task,
       start: task.start,
@@ -136,6 +138,7 @@ export default function TaskDetailScreen({ route, navigation }) {
 
       const requestBody = {
         assignment: task.assignment,
+        assignee: assignee,
         title: editedTask.title,
         description: editedTask.description,
         status: editedTask.status,
@@ -172,6 +175,50 @@ export default function TaskDetailScreen({ route, navigation }) {
     }
   };
 
+  const handleDelete = async () => {
+    Alert.alert(
+      'Xác nhận xóa',
+      'Bạn có chắc chắn muốn xóa task này?',
+      [
+        {
+          text: 'Hủy',
+          style: 'cancel'
+        },
+        {
+          text: 'Xóa',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('token');
+              if (!token) {
+                Alert.alert('Error', 'Authentication required');
+                return;
+              }
+
+              const response = await fetch(`${API_URL}/tasks/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Token ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to delete task');
+              }
+
+              Alert.alert('Success', 'Task deleted successfully');
+              navigation.goBack();
+            } catch (error) {
+              console.error('Error deleting task:', error);
+              Alert.alert('Error', 'Failed to delete task');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   if (loading) {
     return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color="#2d2d6a" /></View>;
   }
@@ -202,9 +249,14 @@ export default function TaskDetailScreen({ route, navigation }) {
           <AntDesign name="arrowleft" size={24} color="#2d2d6a" />
         </TouchableOpacity>
         <Text style={styles.title}>{task.title}</Text>
-        <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
-          <AntDesign name="edit" size={24} color="#2d2d6a" />
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
+            <AntDesign name="edit" size={24} color="#2d2d6a" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+            <AntDesign name="delete" size={24} color="#ff3b30" />
+          </TouchableOpacity>
+        </View>
       </View>
       <ScrollView style={styles.container}>
         <View style={styles.row}>
@@ -261,6 +313,15 @@ export default function TaskDetailScreen({ route, navigation }) {
                 onChangeText={(text) => setEditedTask({...editedTask, description: text})}
                 multiline
                 numberOfLines={6}
+              />
+
+              <Text style={styles.label}>Assignee ID</Text>
+              <TextInput
+                style={[styles.input, styles.largeInput]}
+                value={assignee}
+                onChangeText={(text) => setAssignee(text)}
+                keyboardType="numeric"
+                placeholder="Enter assignee ID"
               />
 
               <Text style={styles.label}>Status</Text>
@@ -510,5 +571,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 8,
   },
 }); 

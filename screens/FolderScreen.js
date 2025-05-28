@@ -1,56 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, RefreshControl } from 'react-native';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import TopBar from '../components/TopBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config/api';
 
-export default function FolderScreen({ navigation }) {
+export default function FolderScreen({ navigation, route }) {
   const [assignments, setAssignments] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortAsc, setSortAsc] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAssignments = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const userStr = await AsyncStorage.getItem('user');
+      if (!token || !userStr) return;
+      const user = JSON.parse(userStr);
+      // Lấy id từ user lưu trong bộ nhớ
+      const params = {
+        creator_id: user.id,
+        limit: 10,
+        offset: 0,
+        ordering: 'start',
+        search: '',
+      };
+      const queryString = Object.entries(params)
+        .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
+        .join('&');
+      const response = await fetch(`${API_URL}/assignments/?${queryString}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('GET /assignments/ status:', response.status);
+      const data = await response.json();
+      const assignments = (data.results || []).map(item => ({
+        id: item.id.toString(),
+        name: `${item.creator_data.last_name} ${item.creator_data.first_name}`,
+        title: item.title,
+        start: new Date(item.start).toLocaleDateString('vi-VN'),
+        deadline: new Date(item.deadline).toLocaleDateString('vi-VN'),
+      }));
+      setAssignments(assignments);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Thêm useEffect để xử lý refresh
+  useEffect(() => {
+    if (route.params?.refresh) {
+      fetchAssignments();
+      // Reset params sau khi refresh
+      navigation.setParams({ refresh: undefined });
+    }
+  }, [route.params?.refresh]);
 
   useEffect(() => {
-    const fetchAssignments = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const userStr = await AsyncStorage.getItem('user');
-        if (!token || !userStr) return;
-        const user = JSON.parse(userStr);
-        // Lấy id từ user lưu trong bộ nhớ
-        const params = {
-          creator_id: user.id,
-          limit: 10,
-          offset: 0,
-          ordering: 'start',
-          search: '',
-        };
-        const queryString = Object.entries(params)
-          .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
-          .join('&');
-        const response = await fetch(`${API_URL}/assignments/?${queryString}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Token ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        console.log('GET /assignments/ status:', response.status);
-        const data = await response.json();
-    //    console.log('API response data:', data);
-       const assignments = (data.results || []).map(item => ({
-         id: item.id.toString(),
-         name: `${item.creator_data.last_name} ${item.creator_data.first_name}`,
-         title: item.title,
-          start: new Date(item.start).toLocaleDateString('vi-VN'),
-          deadline: new Date(item.deadline).toLocaleDateString('vi-VN'),
-       }));
-     //   console.log('Assignments after map:', assignments);
-        setAssignments(assignments);
-      } catch (error) {
-        console.error(error);
-      }
-    };
     fetchAssignments();
   }, []);
 
@@ -60,6 +69,11 @@ export default function FolderScreen({ navigation }) {
       ? new Date(a.deadline.split('/').reverse().join('-')) - new Date(b.deadline.split('/').reverse().join('-'))
       : new Date(b.deadline.split('/').reverse().join('-')) - new Date(a.deadline.split('/').reverse().join('-'))
     );
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchAssignments().finally(() => setRefreshing(false));
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff', padding: 16 }}>
@@ -84,6 +98,14 @@ export default function FolderScreen({ navigation }) {
         data={filtered}
         keyExtractor={item => item.id}
         numColumns={2}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#2d2d6a']}
+            tintColor="#2d2d6a"
+          />
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => navigation.navigate('AssignmentDetailScreen', { assignment: item })}

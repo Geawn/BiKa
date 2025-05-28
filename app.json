@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "BKExpress",
-    "slug": "BKExpressfrontend",
+    "name": "BiKa",
+    "slug": "BiKa",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.geawn.BKExpressfrontend"
+      "package": "com.geawn.BiKa"
     },
     "web": {
       "favicon": "./assets/favicon.png"
