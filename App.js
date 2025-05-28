@@ -33,7 +33,7 @@ function TabNavigator() {
           paddingTop: 5,
           height: 60,
           position: 'absolute',
-          bottom: 0.5,
+          bottom: 40,
           left: 20,
           right: 20,
           elevation: 0,
@@ -110,7 +110,7 @@ export default function App() {
         <Stack.Navigator 
           screenOptions={{
             headerStyle: {
-              backgroundColor: '#99D2E7',
+              backgroundColor: '#99D2E6',
               height: 32,
             },
             headerTintColor: '#2d2d6a',

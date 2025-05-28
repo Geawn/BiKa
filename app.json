@@ -30,6 +30,9 @@
         "projectId": "b94a748f-9605-468b-90e5-40292aeb38b2"
       }
     },
-    "owner": "geawn"
+    "owner": "geawn",
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }
