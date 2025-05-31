@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Image, Alert
+} from 'react-native';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -14,7 +17,6 @@ export default function SignUpScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
-    // Validate input
     if (!firstName || !lastName || !email || !password) {
       Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
       return;
@@ -26,25 +28,26 @@ export default function SignUpScreen({ navigation }) {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         email: email.trim(),
-        password: password.trim()
+        password: password.trim(),
       });
 
       if (response.status === 200 || response.status === 201) {
-        // Lưu token và user info vào AsyncStorage
         await AsyncStorage.setItem('token', response.data.token);
         await AsyncStorage.setItem('expiry', response.data.expiry.toString());
-        await AsyncStorage.setItem('user', JSON.stringify({
-          id: response.data.user.id,
-          firstName: response.data.user.first_name,
-          lastName: response.data.user.last_name,
-          email: response.data.user.email,
-          role: response.data.user.role,
-          avatar: response.data.user.avatar,
-          lastLogin: response.data.user.last_login,
-          created: response.data.user.created,
-          modified: response.data.user.modified
-        }));
-        // Chuyển về HomeScreen
+        await AsyncStorage.setItem(
+          'user',
+          JSON.stringify({
+            id: response.data.user.id,
+            firstName: response.data.user.first_name,
+            lastName: response.data.user.last_name,
+            email: response.data.user.email,
+            role: response.data.user.role,
+            avatar: response.data.user.avatar,
+            lastLogin: response.data.user.last_login,
+            created: response.data.user.created,
+            modified: response.data.user.modified,
+          })
+        );
         navigation.replace('MainApp');
       }
     } catch (error) {
@@ -57,39 +60,31 @@ export default function SignUpScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Logo */}
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('../assets/icon.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-      {/* Title */}
+      <Image source={require('../assets/icon.png')} style={styles.logo} resizeMode="contain" />
       <Text style={styles.title}>Sign up</Text>
-      {/* First Name */}
+
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
           placeholder="First Name"
           value={firstName}
           onChangeText={setFirstName}
-          placeholderTextColor="#2d2d6a"
+          placeholderTextColor="#999"
         />
         <AntDesign name="user" size={20} color="#2d2d6a" style={styles.icon} />
       </View>
-      {/* Last Name */}
+
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
           placeholder="Last Name"
           value={lastName}
           onChangeText={setLastName}
-          placeholderTextColor="#2d2d6a"
+          placeholderTextColor="#999"
         />
         <AntDesign name="user" size={20} color="#2d2d6a" style={styles.icon} />
       </View>
-      {/* Email */}
+
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -98,11 +93,11 @@ export default function SignUpScreen({ navigation }) {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
-          placeholderTextColor="#2d2d6a"
+          placeholderTextColor="#999"
         />
         <AntDesign name="mail" size={20} color="#2d2d6a" style={styles.icon} />
       </View>
-      {/* Password */}
+
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -110,34 +105,29 @@ export default function SignUpScreen({ navigation }) {
           value={password}
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
-          placeholderTextColor="#2d2d6a"
+          placeholderTextColor="#999"
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
           <Feather
-            name={showPassword ? "eye" : "eye-off"}
+            name={showPassword ? 'eye' : 'eye-off'}
             size={20}
             color="#2d2d6a"
             style={styles.icon}
           />
         </TouchableOpacity>
       </View>
-      {/* Hint */}
-      <Text style={styles.hint}>Swipe to the side to fill in all the fields</Text>
-      {/* Continue Button */}
-      <TouchableOpacity 
-        style={styles.button}
+
+      <TouchableOpacity
+        style={[styles.button, loading && styles.disabledBtn]}
         onPress={handleSignUp}
         disabled={loading}
       >
         <Text style={styles.buttonText}>{loading ? 'Đang đăng ký...' : 'Continue'}</Text>
       </TouchableOpacity>
-      {/* Login Link */}
+
       <Text style={styles.loginText}>
         Already have an account?{' '}
-        <Text
-          style={styles.loginLink}
-          onPress={() => navigation.navigate('Login')}
-        >
+        <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
           Log in
         </Text>
       </Text>
@@ -149,67 +139,60 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingHorizontal: 28,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  logoContainer: {
-    marginBottom: 18,
-    alignItems: 'center',
+    paddingHorizontal: 24,
   },
   logo: {
-    width: 90,
-    height: 90,
+    width: 120,
+    height: 120,
+    marginBottom: 30,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
+    marginBottom: 25,
     color: '#2d2d6a',
-    marginBottom: 18,
   },
   inputContainer: {
+    width: '100%',
+    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
     borderColor: '#2d2d6a',
-    borderWidth: 1.5,
-    borderRadius: 8,
-    marginBottom: 14,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    width: '100%',
-    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#f7f9ff',
+    paddingHorizontal: 16,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#2d2d6a',
+    fontSize: 17,
+    color: '#222',
+    paddingVertical: 14,
   },
   icon: {
     marginLeft: 8,
   },
-  hint: {
-    color: '#2d2d6a',
-    fontSize: 12,
-    marginBottom: 18,
-    marginTop: 2,
-    alignSelf: 'flex-start',
-  },
   button: {
-    backgroundColor: '#fff',
-    borderColor: '#2d2d6a',
-    borderWidth: 2,
-    borderRadius: 8,
+    backgroundColor: '#2d2d6a',
+    borderRadius: 12,
     width: '100%',
+    paddingVertical: 16,
     alignItems: 'center',
-    paddingVertical: 12,
-    marginBottom: 18,
-    marginTop: 2,
+    marginBottom: 14,
+    shadowColor: '#2d2d6a',
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  disabledBtn: {
+    opacity: 0.6,
   },
   buttonText: {
-    color: '#2d2d6a',
-    fontWeight: 'bold',
-    fontSize: 18,
-    letterSpacing: 1,
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 17,
   },
   loginText: {
     color: '#2d2d6a',
