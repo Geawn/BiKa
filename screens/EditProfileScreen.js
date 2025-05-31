@@ -18,51 +18,27 @@ const EditProfileScreen = ({ navigation }) => {
   const [lastName, setLastName] = useState('');
 
   useEffect(() => {
-    console.log('[EditProfile] Screen mounted');
     fetchUserProfile();
   }, []);
 
   const fetchUserProfile = async () => {
-    console.log('[EditProfile] Fetching user profile...');
     try {
       const token = await AsyncStorage.getItem('token');
-      console.log('[EditProfile] Token retrieved:', token ? 'Token exists' : 'No token');
-      
+      if (!token) throw new Error('Token missing');
       const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
-      if (!response.ok) {
-        console.error('[EditProfile] Profile fetch failed:', response.status);
-        throw new Error('Failed to fetch profile');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch profile');
       const data = await response.json();
-      console.log('[EditProfile] Profile data received:', {
-        firstName: data.first_name,
-        lastName: data.last_name,
-        email: data.email,
-        role: data.role
-      });
-      
       setFirstName(data.first_name || '');
       setLastName(data.last_name || '');
     } catch (error) {
-      console.error('[EditProfile] Profile Error:', error.message);
       Alert.alert('Lỗi', 'Không thể tải thông tin người dùng');
     }
   };
 
   const handleUpdateProfile = async () => {
-    console.log('[EditProfile] Update profile initiated', {
-      firstName: firstName.trim(),
-      lastName: lastName.trim()
-    });
-
     if (!firstName.trim() || !lastName.trim()) {
-      console.log('[EditProfile] Validation failed: Empty fields');
       Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ họ và tên');
       return;
     }
@@ -70,22 +46,14 @@ const EditProfileScreen = ({ navigation }) => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      console.log('[EditProfile] Token retrieved:', token ? 'Token exists' : 'No token');
-      
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+      if (!token) throw new Error('Bạn cần đăng nhập lại');
 
-      console.log('[EditProfile] Sending update request...');
       const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRFToken': token,
         },
-        credentials: 'include',
         body: JSON.stringify({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
@@ -93,34 +61,15 @@ const EditProfileScreen = ({ navigation }) => {
       });
 
       const responseData = await response.json();
-      console.log('[EditProfile] Response data:', responseData);
-
       if (!response.ok) {
-        console.error('[EditProfile] Update failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: responseData
-        });
-        
-        if (responseData.errors && responseData.errors[0]?.code === 'permission_denied') {
-          throw new Error('Không có quyền cập nhật thông tin');
-        }
-        throw new Error(responseData.message || 'Failed to update profile');
+        throw new Error(responseData.message || 'Không thể cập nhật thông tin');
       }
 
-      console.log('[EditProfile] Profile updated successfully');
       Alert.alert('Thành công', 'Cập nhật thông tin thành công', [
-        {
-          text: 'OK',
-          onPress: () => {
-            console.log('[EditProfile] Navigating back to UserScreen');
-            navigation.goBack();
-          },
-        },
+        { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      console.error('[EditProfile] Update Error:', error.message);
-      Alert.alert('Lỗi', error.message || 'Không thể cập nhật thông tin');
+      Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra khi cập nhật');
     } finally {
       setLoading(false);
     }
@@ -128,26 +77,31 @@ const EditProfileScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.form}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Họ</Text>
-          <TextInput
-            style={styles.input}
-            value={lastName}
-            onChangeText={setLastName}
-            placeholder="Nhập họ của bạn"
-          />
-        </View>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <AntDesign name="arrowleft" size={28} color="#4f46e5" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+      </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tên</Text>
-          <TextInput
-            style={styles.input}
-            value={firstName}
-            onChangeText={setFirstName}
-            placeholder="Nhập tên của bạn"
-          />
-        </View>
+      <View style={styles.form}>
+        <Text style={styles.label}>Họ</Text>
+        <TextInput
+          style={styles.input}
+          value={lastName}
+          onChangeText={setLastName}
+          placeholder="Nhập họ của bạn"
+          editable={!loading}
+        />
+
+        <Text style={styles.label}>Tên</Text>
+        <TextInput
+          style={styles.input}
+          value={firstName}
+          onChangeText={setFirstName}
+          placeholder="Nhập tên của bạn"
+          editable={!loading}
+        />
 
         <TouchableOpacity
           style={[styles.updateButton, loading && styles.updateButtonDisabled]}
@@ -166,43 +120,48 @@ const EditProfileScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  container: { flex: 1, backgroundColor: '#f3f4ff' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomColor: '#c7d2fe',
+    borderBottomWidth: 1,
   },
-  form: {
-    padding: 16,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
+  backBtn: { padding: 8, marginRight: 16 },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: '#4f46e5' },
+  form: { padding: 16 },
   label: {
     fontSize: 16,
+    color: '#4f46e5',
     marginBottom: 8,
-    color: '#333',
+    fontWeight: '600',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: '#eef2ff',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     fontSize: 16,
+    color: '#3730a3',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
   },
   updateButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: '#4f46e5',
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 20,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 6,
   },
-  updateButtonDisabled: {
-    opacity: 0.7,
-  },
-  updateButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  updateButtonDisabled: { opacity: 0.7 },
+  updateButtonText: { color: '#fff', fontWeight: '700', fontSize: 18 },
 });
 
-export default EditProfileScreen; 
+export default EditProfileScreen;
