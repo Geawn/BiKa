@@ -122,7 +122,7 @@ export default function FolderScreen({ navigation, route }) {
               activeOpacity={0.8}
             >
               <View style={styles.card}>
-                <Image source={require('../assets/icon.png')} style={styles.cardImg} />
+                <Image source={require('../assets/assignment.png')} style={styles.cardImg} />
                 <View style={styles.cardContent}>
                   <Text style={styles.cardName}>{item.name}</Text>
                   <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
@@ -180,7 +180,8 @@ const styles = StyleSheet.create({
   cardImg: {
     width: '100%',
     height: 80,
-    resizeMode: 'cover',
+    resizeMode: 'contain',
+    backgroundColor: '#f9fafb',
   },
   cardContent: {
     padding: 12,

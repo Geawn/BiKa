@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, FlatList, TouchableOpacity, 
   ActivityIndicator, TextInput, Image, Animated, Easing 
@@ -22,6 +22,7 @@ const HomeScreen = ({ navigation }) => {
   });
   const [selectedDate, setSelectedDate] = useState(new Date());
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const flatListRef = useRef(null);
 
   const animatePressIn = () => {
     Animated.timing(scaleAnim, {
@@ -70,7 +71,7 @@ const HomeScreen = ({ navigation }) => {
   };
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       fetchCompletionPercentage();
       fetchTasks();
     }, [])
@@ -87,16 +88,24 @@ const HomeScreen = ({ navigation }) => {
     return sortAscending ? dateA - dateB : dateB - dateA;
   });
 
-  const getWeekDays = (startDate) => {
+  const getDateRange = () => {
+    const today = new Date();
     const days = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(startDate);
-      d.setDate(startDate.getDate() + i);
+    const totalDays = 21; // 3 weeks for a broader range
+    const startOffset = -10; // Start 10 days before today to center it
+
+    for (let i = startOffset; i < startOffset + totalDays; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
       days.push({
         date: d,
-        isToday: new Date().toDateString() === d.toDateString(),
+        isToday: today.toDateString() === d.toDateString(),
       });
     }
+    console.log('Date Range:', days.map(item => ({
+      date: item.date.toDateString(),
+      isToday: item.isToday
+    }))); // Debugging log
     return days;
   };
 
@@ -104,6 +113,18 @@ const HomeScreen = ({ navigation }) => {
     const newStart = new Date(currentWeekStart);
     newStart.setDate(newStart.getDate() + direction * 7);
     setCurrentWeekStart(newStart);
+    const newSelectedDate = new Date(selectedDate);
+    newSelectedDate.setDate(newSelectedDate.getDate() + direction * 7);
+    setSelectedDate(newSelectedDate);
+    const dateRange = getDateRange();
+    const index = dateRange.findIndex(item => item.date.toDateString() === newSelectedDate.toDateString());
+    if (index !== -1 && flatListRef.current) {
+      try {
+        flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+      } catch (error) {
+        console.error('Error scrolling to index in moveWeek:', error);
+      }
+    }
   };
 
   const onDatePress = (date) => {
@@ -111,8 +132,49 @@ const HomeScreen = ({ navigation }) => {
     setTimeout(() => {
       setSelectedDate(date);
       animatePressOut();
+      const dateRange = getDateRange();
+      const index = dateRange.findIndex(item => item.date.toDateString() === date.toDateString());
+      if (index !== -1 && flatListRef.current) {
+        try {
+          flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+        } catch (error) {
+          console.error('Error scrolling to index in onDatePress:', error);
+        }
+      }
     }, 100);
   };
+
+  // Scroll to today's date after loading
+  useEffect(() => {
+    if (!loading && flatListRef.current) {
+      const dateRange = getDateRange();
+      const todayIndex = dateRange.findIndex(item => item.isToday);
+      console.log('Today Index:', todayIndex, 'Date Range Length:', dateRange.length); // Debugging log
+      if (todayIndex !== -1) {
+        setTimeout(() => {
+          try {
+            if (flatListRef.current) {
+              flatListRef.current.scrollToIndex({ index: todayIndex, animated: false, viewPosition: 0.5 });
+              console.log('Scrolled to todayIndex:', todayIndex); // Debugging log
+            } else {
+              console.warn('flatListRef.current is null in useEffect');
+            }
+          } catch (error) {
+            console.error('Error scrolling to todayIndex:', error);
+          }
+        }, 300); // Increased delay for Hermes
+      }
+    }
+  }, [loading]);
+
+  // Define item layout for efficient scrolling
+  const getItemLayout = (data, index) => ({
+    length: 72, // Width of dateItem (56) + marginHorizontal (8 + 8)
+    offset: 72 * index,
+    index,
+  });
+
+  const todayIndex = getDateRange().findIndex(item => item.isToday);
 
   const handleAvatarPress = () => navigation.navigate('UserScreen');
   const handleMenuPress = () => navigation.navigate('SettingsScreen');
@@ -154,14 +216,15 @@ const HomeScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.calendarContainer}>
-        <Text style={styles.monthText}>{currentWeekStart.toLocaleString('default', { month: 'long', year: 'numeric' })}</Text>
+        <Text style={styles.monthText}>{selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</Text>
         <View style={styles.calendarRow}>
           <TouchableOpacity onPress={() => moveWeek(-1)} activeOpacity={0.7}>
             <AntDesign name="leftcircle" size={30} color="#6366f1" />
           </TouchableOpacity>
           <FlatList
+            ref={flatListRef}
             horizontal
-            data={getWeekDays(currentWeekStart)}
+            data={getDateRange()}
             keyExtractor={(item, idx) => idx.toString()}
             renderItem={({ item }) => {
               const isSelected = selectedDate.toDateString() === item.date.toDateString();
@@ -188,6 +251,8 @@ const HomeScreen = ({ navigation }) => {
             }}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 10 }}
+            getItemLayout={getItemLayout}
+            initialScrollIndex={todayIndex >= 0 ? todayIndex : undefined}
           />
           <TouchableOpacity onPress={() => moveWeek(1)} activeOpacity={0.7}>
             <AntDesign name="rightcircle" size={30} color="#6366f1" />

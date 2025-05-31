@@ -191,8 +191,8 @@ export default function TaskDetailScreen({ route, navigation }) {
   return (
     <View style={styles.screen}>
       <TopBar
-        searchQuery={''}
-        setSearchQuery={() => {}}
+        // searchQuery={''}
+        // setSearchQuery={() => {}}
         onAvatarPress={() => navigation.navigate('UserScreen')}
         onMenuPress={() => navigation.navigate('SettingsScreen')}
       />
@@ -457,6 +457,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
+    flex: 1,
     backgroundColor: '#fff',
     borderRadius: 20,
     width: '90%',
@@ -466,6 +467,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 15,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -479,7 +482,8 @@ const styles = StyleSheet.create({
     color: '#4f46e5',
   },
   modalScroll: {
-    maxHeight: '65%',
+    flex: 1,
+    marginBottom: 20,
   },
   largeInput: {
     height: 50,
@@ -524,6 +528,9 @@ const styles = StyleSheet.create({
   modalFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e7ff',
   },
   modalButton: {
     flex: 1,

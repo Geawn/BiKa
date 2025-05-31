@@ -223,11 +223,11 @@ export default function CreateAssignmentScreen({ navigation }) {
           <Text style={styles.createBtnText}>{isLoading ? 'Creating...' : 'Create'}</Text>
         </TouchableOpacity>
 
-        <Image
-          source={require('../assets/icon.png')}
+        {/* <Image
+          source={require('../assets/create.png')}
           style={styles.iconImage}
           resizeMode="contain"
-        />
+        /> */}
       </ScrollView>
     </View>
   );

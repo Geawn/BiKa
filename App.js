@@ -33,68 +33,67 @@ function TabNavigator() {
     <SafeAreaView style={{ flex: 1 }}>
       <Tab.Navigator
         screenOptions={{
-          tabBarActiveTintColor: '#007AFf',
-          tabBarInactiveTintColor: 'gray',
+          tabBarActiveTintColor: '#4f46e5',
+          tabBarInactiveTintColor: '#9ca3af',
           tabBarStyle: {
-            paddingBottom: 5,
-            paddingTop: 5,
-            height: 60,
             position: 'absolute',
             bottom: 0,
             left: 0,
             right: 0,
-            elevation: 0,
-            backgroundColor: '#ffffff',
-            borderTopWidth: 1,
-            borderTopColor: '#e0e0e0',
-            shadowColor: '#000',
-            shadowOffset: {
-              width: 0,
-              height: -2,
-            },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
+            height: 65,
+            backgroundColor: '#fff',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingTop: 8,
+            paddingBottom: 15,
+            shadowColor: '#4f46e5',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 10,
+            elevation: 8,
+          },
+          tabBarLabelStyle: {
+            fontWeight: '600',
+            fontSize: 12,
+            marginBottom: 4,
+            marginTop: 4,
+          },
+          tabBarIconStyle: {
+            // marginBottom: 6,        
           },
           headerShown: false,
-        }}>
+        }}
+      >
         <Tab.Screen
           name="HomeTab"
           component={HomeScreen}
           options={{
             tabBarLabel: 'Trang chủ',
-            tabBarIcon: ({ color, size }) => (
-              <AntDesign name="home" size={size} color={color} />
-            ),
+            tabBarIcon: ({ color, size }) => <AntDesign name="home" size={size} color={color} />,
           }}
         />
         <Tab.Screen
           name="Folder"
           component={FolderScreen}
           options={{
-            tabBarLabel: 'Assignment',
-            tabBarIcon: ({ color, size }) => (
-              <AntDesign name="folderopen" size={size} color={color} />
-            ),
+            tabBarLabel: 'Bài tập',
+            tabBarIcon: ({ color, size }) => <AntDesign name="folderopen" size={size} color={color} />,
           }}
         />
         <Tab.Screen
           name="Utility"
-          component={TaskScreen}
+          component={UtilityScreen}
           options={{
-            tabBarLabel: 'Task',
-            tabBarIcon: ({ color, size }) => (
-              <AntDesign name="laptop" size={size} color={color} />
-            ),
+            tabBarLabel: 'Tiện ích',
+            tabBarIcon: ({ color, size }) => <AntDesign name="appstore-o" size={size} color={color} />,
           }}
         />
         <Tab.Screen
           name="Settings"
-          component={UtilityScreen}
+          component={SettingsScreen}
           options={{
-            tabBarLabel: 'Tiện ích',
-            tabBarIcon: ({ color, size }) => (
-              <AntDesign name="appstore-o" size={size} color={color} />
-            ),
+            tabBarLabel: 'Cài đặt',
+            tabBarIcon: ({ color, size }) => <AntDesign name="setting" size={size} color={color} />,
           }}
         />
         <Tab.Screen
@@ -102,11 +101,10 @@ function TabNavigator() {
           component={NotificationScreen}
           options={{
             tabBarLabel: 'Thông báo',
-            tabBarIcon: ({ color, size }) => (
-              <AntDesign name="bells" size={size} color={color} />
-            ),
+            tabBarIcon: ({ color, size }) => <AntDesign name="bells" size={size} color={color} />,
           }}
         />
+
       </Tab.Navigator>
     </SafeAreaView>
   );
@@ -118,9 +116,9 @@ export default function App() {
   useEffect(() => {
     // Clear AsyncStorage in development mode
     //if (__DEV__) {
-   //   AsyncStorage.clear();
-//}
-    
+    //   AsyncStorage.clear();
+    //}
+
     AsyncStorage.getItem('alreadyLaunched').then(value => {
       if (value === null) {
         AsyncStorage.setItem('alreadyLaunched', 'true');
@@ -139,19 +137,29 @@ export default function App() {
     <SafeAreaProvider>
       <Provider store={store}>
         <NavigationContainer>
-          <Stack.Navigator 
-           initialRouteName={isFirstLaunch ? "Onboarding" : "Splash"} // bật dòng này, tắt dòng dưới để bật login log out
-           //   initialRouteName="MainApp"
+          <Stack.Navigator
+            initialRouteName={isFirstLaunch ? "Onboarding" : "Splash"} // bật dòng này, tắt dòng dưới để bật login log out
+            //   initialRouteName="MainApp"
             screenOptions={{
               headerStyle: {
                 backgroundColor: '#99D2E6',
-                height: 32,
+                height: 48,
+                shadowColor: '#4f46e5',
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+                elevation: 6,
               },
-              headerTintColor: '#2d2d6a',
+              headerTitleAlign: 'center',
               headerTitleStyle: {
                 fontWeight: 'bold',
+                fontSize: 18,
+                color: '#2d2d6a',
               },
-              headerShown: true,
+              headerTintColor: '#4f46e5',
+              headerBackTitleVisible: false,
+              headerBackImage: () => (
+                <AntDesign name="arrowleft" size={24} color="#4f46e5" style={{ marginLeft: 12 }} />
+              ),
             }}
           >
             <Stack.Screen
@@ -164,8 +172,8 @@ export default function App() {
               component={SplashScreen}
               options={{ headerShown: false }}
             />
-            <Stack.Screen 
-              name="EditProfile" 
+            <Stack.Screen
+              name="EditProfile"
               component={EditProfileScreen}
               options={{
                 title: 'Chỉnh sửa thông tin',
@@ -180,47 +188,44 @@ export default function App() {
                 headerLeft: () => null
               }}
             />
-            <Stack.Screen 
-              name="MainApp" 
-              component={TabNavigator} 
-              options={{ 
-                headerShown: true,
-                headerLeft: () => null
-              }} 
+            <Stack.Screen
+              name="MainApp"
+              component={TabNavigator}
+              options={{ headerShown: false }}
             />
-            <Stack.Screen 
-              name="UserScreen" 
+            <Stack.Screen
+              name="UserScreen"
               component={UserScreen}
               options={{
                 title: 'User Profile',
                 headerLeft: () => null
               }}
             />
-            <Stack.Screen 
-              name="SettingsScreen" 
+            <Stack.Screen
+              name="SettingsScreen"
               component={SettingsScreen}
               options={{
                 title: 'Settings',
                 headerLeft: () => null
               }}
             />
-            <Stack.Screen 
-              name="AssignmentDetailScreen" 
+            <Stack.Screen
+              name="AssignmentDetailScreen"
               component={AssignmentDetailScreen}
               options={{
                 title: 'Chi tiết bài tập',
                 headerLeft: () => null
               }}
             />
-            <Stack.Screen 
-              name="CreateAssignment" 
+            <Stack.Screen
+              name="CreateAssignment"
               component={CreateAssignmentScreen}
               options={{
                 headerLeft: () => null
               }}
             />
-            <Stack.Screen 
-              name="CreateTaskScreen" 
+            <Stack.Screen
+              name="CreateTaskScreen"
               component={CreateTaskScreen}
               options={{
                 title: 'Tạo Task',
@@ -228,9 +233,9 @@ export default function App() {
               }}
             />
             <Stack.Screen name="Tasks" component={TaskScreen} />
-            <Stack.Screen 
-              name="TaskDetail" 
-              component={TaskDetailScreen} 
+            <Stack.Screen
+              name="TaskDetail"
+              component={TaskDetailScreen}
               options={{
                 title: 'Chi tiết Task',
                 headerLeft: () => null,
