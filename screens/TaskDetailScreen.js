@@ -191,8 +191,8 @@ export default function TaskDetailScreen({ route, navigation }) {
   return (
     <View style={styles.screen}>
       <TopBar
-        // searchQuery={''}
-        // setSearchQuery={() => {}}
+        searchQuery={''}
+        setSearchQuery={() => {}}
         onAvatarPress={() => navigation.navigate('UserScreen')}
         onMenuPress={() => navigation.navigate('SettingsScreen')}
       />

@@ -58,9 +58,6 @@ function TabNavigator() {
             marginBottom: 4,
             marginTop: 4,
           },
-          tabBarIconStyle: {
-            // marginBottom: 6,        
-          },
           headerShown: false,
         }}
       >
@@ -81,6 +78,14 @@ function TabNavigator() {
           }}
         />
         <Tab.Screen
+          name="Task"
+          component={TaskScreen}
+          options={{
+            tabBarLabel: 'Công việc',
+            tabBarIcon: ({ color, size }) => <AntDesign name="checkcircleo" size={size} color={color} />,
+          }}
+        />
+        <Tab.Screen
           name="Utility"
           component={UtilityScreen}
           options={{
@@ -88,14 +93,15 @@ function TabNavigator() {
             tabBarIcon: ({ color, size }) => <AntDesign name="appstore-o" size={size} color={color} />,
           }}
         />
-        <Tab.Screen
+        {/* Nếu muốn bật lại Settings, nhớ sửa name không trùng */}
+        {/* <Tab.Screen
           name="Settings"
           component={SettingsScreen}
           options={{
             tabBarLabel: 'Cài đặt',
             tabBarIcon: ({ color, size }) => <AntDesign name="setting" size={size} color={color} />,
           }}
-        />
+        /> */}
         <Tab.Screen
           name="Notification"
           component={NotificationScreen}
@@ -104,11 +110,11 @@ function TabNavigator() {
             tabBarIcon: ({ color, size }) => <AntDesign name="bells" size={size} color={color} />,
           }}
         />
-
       </Tab.Navigator>
     </SafeAreaView>
   );
 }
+
 
 export default function App() {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
