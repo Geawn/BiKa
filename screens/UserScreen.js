@@ -17,8 +17,12 @@ const UserScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUserProfile();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchUserProfile();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const fetchUserProfile = async () => {
     try {
@@ -81,6 +85,7 @@ const UserScreen = ({ navigation }) => {
         </Text>
         <Text style={styles.email}>{userData?.email || ''}</Text>
         <Text style={styles.role}>{userData?.role || ''}</Text>
+        <Text style={styles.userId}>ID: {userData?.id || 'N/A'}</Text>
       </View>
 
       <View style={styles.menuSection}>
@@ -120,6 +125,7 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: '#f3f4ff',
     flexGrow: 1,
+    paddingTop: 40,
   },
   loadingContainer: {
     flex: 1,
@@ -172,6 +178,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     textTransform: 'capitalize',
+  },
+  userId: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 4,
   },
   menuSection: {
     borderTopWidth: 1,

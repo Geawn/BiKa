@@ -26,7 +26,7 @@ const EditProfileScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem('token');
       if (!token) throw new Error('Token missing');
       const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Token ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch profile');
       const data = await response.json();
@@ -51,18 +51,18 @@ const EditProfileScreen = ({ navigation }) => {
       const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Token ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           first_name: firstName.trim(),
-          last_name: lastName.trim(),
+          last_name: lastName.trim()
         }),
       });
 
-      const responseData = await response.json();
       if (!response.ok) {
-        throw new Error(responseData.message || 'Không thể cập nhật thông tin');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Không thể cập nhật thông tin');
       }
 
       Alert.alert('Thành công', 'Cập nhật thông tin thành công', [
@@ -120,7 +120,11 @@ const EditProfileScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4ff' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f3f4ff',
+    paddingTop: 40,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -128,6 +132,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomColor: '#c7d2fe',
     borderBottomWidth: 1,
+    marginBottom: 20,
   },
   backBtn: { padding: 8, marginRight: 16 },
   headerTitle: { fontSize: 22, fontWeight: '700', color: '#4f46e5' },

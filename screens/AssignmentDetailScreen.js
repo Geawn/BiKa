@@ -46,18 +46,31 @@ export default function AssignmentDetailScreen({ route, navigation }) {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
 
-      const taskRes = await fetch(
-        `${API_URL}/tasks/?assignment_id=${assignment.id}&limit=10&offset=0`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Token ${token}`,
-            'Content-Type': 'application/json',
-          },
+      let url = `${API_URL}/tasks/?assignment_id=${assignment.id}&limit=10&offset=0`;
+      
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        // Nếu KHÔNG phải giáo viên (hoặc role đặc biệt), luôn truyền assignee_id
+        if (user.role !== 'teacher' && user.role !== 'admin') {
+          url += `&assignee_id=${user.id}`;
         }
-      );
+      }
+
+   
+
+      const taskRes = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       if (taskRes.ok) {
         const taskData = await taskRes.json();
+     //   console.log('API Response:', taskData); // Debug log
+        // Log task IDs and assignees
+    
         setTasks(
           taskData.results.map(task => ({
             id: String(task.id),
@@ -391,6 +404,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+   
   },
   backButton: {
     marginRight: 12,

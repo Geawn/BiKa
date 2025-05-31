@@ -178,7 +178,13 @@ export default function FolderScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4ff', paddingHorizontal: 16, paddingTop: 16 },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f3f4ff', 
+    paddingHorizontal: 16, 
+    paddingTop: 16,
+    paddingBottom: 80  // Add bottom padding
+  },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   title: { fontSize: 24, fontWeight: '700', color: '#4f46e5' },
   headerActions: { flexDirection: 'row', alignItems: 'center' },

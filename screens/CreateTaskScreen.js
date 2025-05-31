@@ -56,8 +56,8 @@ export default function CreateTaskScreen({ navigation, route }) {
   };
 
   const handleCreateTask = async () => {
-    if (!title.trim() || !assignee.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ các trường bắt buộc.');
+    if (!title.trim() || !assignee.trim() || !description.trim() || !startDate || !endDate) {
+      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ tất cả các trường bắt buộc.');
       return;
     }
     setIsSubmitting(true);
@@ -261,13 +261,22 @@ export default function CreateTaskScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4ff', padding: 16 },
-  backBtn: { marginBottom: 16 },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f3f4ff', 
+    padding: 16,
+    paddingTop: 50,
+  },
+  backBtn: { 
+    marginBottom: 16,
+    marginTop: 10,
+  },
   header: { fontSize: 26, fontWeight: '700', color: '#4f46e5', marginBottom: 24 },
   label: { fontWeight: '600', color: '#4f46e5', marginBottom: 6 },
   input: {
     backgroundColor: '#e0e7ff',
     borderRadius: 12,
+    
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 16,

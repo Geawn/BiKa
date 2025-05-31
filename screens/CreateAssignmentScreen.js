@@ -234,8 +234,18 @@ export default function CreateAssignmentScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4ff', padding: 16 },
-  backBtn: { marginBottom: 20, padding: 4, alignSelf: 'flex-start' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f3f4ff', 
+    padding: 16,
+    paddingTop: 50,
+  },
+  backBtn: { 
+    marginBottom: 20, 
+    padding: 4, 
+    alignSelf: 'flex-start',
+    marginTop: 10,
+  },
   header: { fontSize: 28, fontWeight: '700', color: '#4f46e5', marginBottom: 24 },
   label: { fontWeight: '600', color: '#4f46e5', marginBottom: 8, fontSize: 16 },
   required: { color: '#ef4444' },

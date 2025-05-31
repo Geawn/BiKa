@@ -52,6 +52,7 @@ export default function TaskScreen() {
       const userStr = await AsyncStorage.getItem('user');
       if (!token || !userStr) return;
       const user = JSON.parse(userStr);
+      console.log('Current user role:', user.role);
       let params;
       if (user.role === 'student') {
           params = {
@@ -61,6 +62,7 @@ export default function TaskScreen() {
             ordering: 'start',
             search: '',
           };
+          console.log('Student request params:', params);
       }
       else if (user.role === 'lecturer') {
           params = {
@@ -70,6 +72,7 @@ export default function TaskScreen() {
             ordering: 'start',
             search: '',
           };
+          console.log('Lecturer request params:', params);
       }
       else {
           params = {
@@ -77,6 +80,7 @@ export default function TaskScreen() {
             ordering: 'start',
             search: '',
           }
+          console.log('Other role request params:', params);
       }
       const queryString = Object.entries(params)
         .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
@@ -134,15 +138,6 @@ export default function TaskScreen() {
           <Feather name="filter" size={24} color="#4f46e5" />
           <Text style={styles.sortText}>{sortAsc ? 'A-Z' : 'Z-A'}</Text>
         </TouchableOpacity>
-        {/* Nếu không phải student mới hiện nút thêm task */}
-        {role !== 'student' && (
-          <TouchableOpacity
-            style={{ marginLeft: 16 }}
-            onPress={() => navigation.navigate('CreateTaskScreen')}
-          >
-            <Feather name="plus-circle" size={28} color="#4f46e5" />
-          </TouchableOpacity>
-        )}
       </View>
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -170,6 +165,9 @@ export default function TaskScreen() {
               >
                 <View style={styles.taskItem}>
                   <Text style={styles.taskTitle}>{item.title}</Text>
+                  {item.assignment_data && (
+                    <Text style={styles.assignmentTitle}>Assignment: {item.assignment_data.title}</Text>
+                  )}
                   {item.description ? <Text style={styles.taskDesc}>{item.description}</Text> : null}
                 </View>
               </TouchableOpacity>
@@ -185,7 +183,13 @@ export default function TaskScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4ff', paddingHorizontal: 16, paddingTop: 24 },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f3f4ff', 
+    paddingHorizontal: 16, 
+    paddingTop: 24,
+    paddingBottom: 80  // Add bottom padding
+  },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start', // chỉnh lại để nút thêm task không bị đẩy quá xa
@@ -244,6 +248,12 @@ const styles = StyleSheet.create({
   taskDesc: {
     fontSize: 14,
     color: '#6b7280',
+  },
+  assignmentTitle: {
+    fontSize: 14,
+    color: '#4f46e5',
+    marginBottom: 6,
+    fontStyle: 'italic',
   },
   separator: {
     height: 10,

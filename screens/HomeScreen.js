@@ -292,7 +292,11 @@ const HomeScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4ff' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f3f4ff',
+    paddingBottom: 80, // Add padding for tab navigator
+  },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
@@ -420,6 +424,7 @@ const styles = StyleSheet.create({
   recentContainer: {
     flex: 1,
     marginHorizontal: 12,
+    marginBottom: 20, // Add margin bottom
   },
   recentHeader: {
     flexDirection: 'row',

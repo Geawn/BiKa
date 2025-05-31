@@ -144,9 +144,9 @@ export default function App() {
       <Provider store={store}>
         <NavigationContainer>
           <Stack.Navigator
-            initialRouteName={isFirstLaunch ? "Onboarding" : "Splash"} // bật dòng này, tắt dòng dưới để bật login log out
-            //   initialRouteName="MainApp"
+            initialRouteName={isFirstLaunch ? "Onboarding" : "Splash"}
             screenOptions={{
+              headerShown: false,
               headerStyle: {
                 backgroundColor: '#99D2E6',
                 height: 48,
@@ -243,9 +243,9 @@ export default function App() {
               name="TaskDetail"
               component={TaskDetailScreen}
               options={{
+                headerShown: false,
                 title: 'Chi tiết Task',
                 headerLeft: () => null,
-                headerShown: true
               }}
             />
             <Stack.Screen

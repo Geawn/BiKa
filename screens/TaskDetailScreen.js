@@ -235,6 +235,13 @@ export default function TaskDetailScreen({ route, navigation }) {
           </View>
         </View>
 
+        {task.assignment_data && (
+          <View style={styles.row}>
+            <Text style={styles.label}>Assignment:</Text>
+            <Text style={styles.assignmentText}>{task.assignment_data.title}</Text>
+          </View>
+        )}
+
         <View style={styles.row}>
           <Text style={styles.label}>Assigned to:</Text>
           <TextInput style={styles.input} value={assignedTo} editable={false} />
@@ -368,6 +375,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#f3f4ff',
+    paddingTop: 50,
   },
   loadingContainer: {
     flex: 1,
@@ -391,6 +399,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#eef2ff',
     borderBottomWidth: 1,
     borderBottomColor: '#c7d2fe',
+    marginTop: 10,
   },
   backButton: {
     marginRight: 12,
@@ -571,5 +580,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     fontSize: 16,
+  },
+  assignmentText: {
+    flex: 1,
+    color: '#4f46e5',
+    fontSize: 15,
+    fontWeight: '500',
+    fontStyle: 'italic',
   },
 });
