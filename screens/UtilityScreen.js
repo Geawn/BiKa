@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { 
+  View, Text, StyleSheet, ScrollView, ActivityIndicator 
+} from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
 const UtilityScreen = () => {
@@ -20,15 +22,14 @@ const UtilityScreen = () => {
       const data = await response.json();
       
       if (data.Data) {
-        // Format the rates data and take only needed currencies
-        const formattedRates = data.Data
+        const filteredRates = data.Data
           .filter(item => ['USD', 'EUR', 'GBP', 'JPY', 'HKD', 'AUD', 'NZD', 'CAD', 'SGD', 'THB', 'KRW'].includes(item.currencyCode))
           .map(item => ({
             currency: item.currencyCode,
             rate: parseFloat(item.sell).toFixed(2)
           }));
-        
-        setExchangeRates(formattedRates);
+
+        setExchangeRates(filteredRates);
         setLastUpdated(new Date(data.UpdatedDate).toLocaleDateString('vi-VN'));
       }
     } catch (error) {
@@ -44,18 +45,23 @@ const UtilityScreen = () => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
-  
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}
-    bounces={true}
-    overScrollMode="always">
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={{ paddingBottom: 100 }}
+      bounces={true}
+      overScrollMode="always"
+    >
       <Text style={styles.header}>Tiện ích</Text>
 
-      {/* Phần lịch Việt */}
+      {/* Lịch Việt */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>LỊCH VIỆT</Text>
         <View style={styles.calendarHeader}>
-          <Text style={styles.dayName}>{selectedDate.toLocaleDateString('vi-VN', { weekday: 'long' }).toUpperCase()}</Text>
+          <Text style={styles.dayName}>
+            {selectedDate.toLocaleDateString('vi-VN', { weekday: 'long' }).toUpperCase()}
+          </Text>
           <Text style={styles.dateNumber}>{selectedDate.getDate()}</Text>
           <Text style={styles.monthYear}>
             Tháng {selectedDate.getMonth() + 1} - {selectedDate.getFullYear()}
@@ -64,60 +70,57 @@ const UtilityScreen = () => {
         
         <Calendar
           style={styles.calendar}
-          current={getLocalDateString(selectedDate)} // Hiển thị đúng ngày GMT+7
+          current={getLocalDateString(selectedDate)}
           markedDates={{
-            [getLocalDateString(selectedDate)]: { selected: true } // Đánh dấu đúng
+            [getLocalDateString(selectedDate)]: { selected: true }
           }}
-          onDayPress={(day) => {
-            setSelectedDate(new Date(day.dateString)); // Không cần chỉnh timezone vì day.dateString đã là YYYY-MM-DD
-          }}
+          onDayPress={day => setSelectedDate(new Date(day.dateString))}
           theme={{
-            calendarBackground: '#fff',
-            selectedDayBackgroundColor: '#ff6b6b',
+            calendarBackground: '#f3f4ff',
+            selectedDayBackgroundColor: '#4f46e5',
             selectedDayTextColor: '#fff',
-            todayTextColor: '#ff6b6b',
-            dayTextColor: '#2d4150',
-            textDisabledColor: '#d9e1e8',
-            dotColor: '#00adf5',
+            todayTextColor: '#4f46e5',
+            dayTextColor: '#1e293b',
+            textDisabledColor: '#94a3b8',
+            dotColor: '#4f46e5',
             selectedDotColor: '#fff',
-            arrowColor: '#ff6b6b',
-            monthTextColor: '#ff6b6b',
-            textDayFontWeight: '300',
-            textMonthFontWeight: 'bold',
-            textDayHeaderFontWeight: '300',
+            arrowColor: '#4f46e5',
+            monthTextColor: '#4f46e5',
+            textDayFontWeight: '500',
+            textMonthFontWeight: '700',
+            textDayHeaderFontWeight: '500',
             textDayFontSize: 14,
-            textMonthFontSize: 16,
-            textDayHeaderFontSize: 14
-            
+            textMonthFontSize: 18,
+            textDayHeaderFontSize: 14,
           }}
         />
       </View>
 
-      {/* Phần tỷ giá ngoại tệ */}
-      <View style={[styles.section, { marginBottom: 1 }]}>
+      {/* Tỷ giá ngoại tệ */}
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>THAM KHẢO TỶ GIÁ</Text>
-        <Text style={styles.updateDate}>Cập nhật ngày {lastUpdated}</Text>
+        <Text style={styles.updateDate}>Cập nhật ngày {lastUpdated || '...'} </Text>
         
         {loading ? (
-          <Text style={styles.loadingText}>Đang tải tỷ giá...</Text>
+          <ActivityIndicator size="large" color="#4f46e5" style={{ marginVertical: 20 }} />
         ) : (
           <View style={styles.ratesContainer}>
             <View style={styles.ratesHeader}>
               <Text style={styles.ratesHeaderText}>Ngoại tệ</Text>
-              <Text style={styles.ratesHeaderText}>Tỷ giá bán</Text>
+              <Text style={styles.ratesHeaderText}>Tỷ giá bán (VND)</Text>
             </View>
             
-            {exchangeRates.map((item, index) => (
-              <View key={index} style={styles.rateRow}>
+            {exchangeRates.map((item, idx) => (
+              <View key={idx} style={styles.rateRow}>
                 <Text style={styles.currencyText}>{item.currency}</Text>
                 <Text style={styles.rateText}>
-                  {parseFloat(item.rate).toLocaleString('vi-VN', {
+                  {Number(item.rate).toLocaleString('vi-VN', {
                     minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })} VND
+                    maximumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
-            ))} 
+            ))}
           </View>
         )}
       </View>
@@ -128,64 +131,61 @@ const UtilityScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 16,
+    backgroundColor: '#f3f4ff',
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '700',
     marginBottom: 20,
-    color: '#333',
+    color: '#4f46e5',
   },
   section: {
-    backgroundColor: 'white',
-    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    marginBottom: 20,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 10,
+    elevation: 6,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 12,
-    color: '#ff6b6b',
+    color: '#4f46e5',
   },
   calendarHeader: {
     alignItems: 'center',
-    marginBottom: 1,
+    marginBottom: 8,
   },
   dayName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: '#1e293b',
   },
   dateNumber: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#ff6b6b',
+    fontSize: 44,
+    fontWeight: '700',
+    color: '#4f46e5',
     marginVertical: 4,
   },
   monthYear: {
     fontSize: 14,
-    color: '#666',
+    color: '#64748b',
   },
   calendar: {
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   updateDate: {
     fontSize: 12,
-    color: '#666',
+    color: '#64748b',
     marginBottom: 12,
-  },
-  loadingText: {
-    textAlign: 'center',
-    color: '#666',
-    paddingVertical: 16,
+    fontWeight: '500',
   },
   ratesContainer: {
     marginTop: 8,
@@ -193,28 +193,32 @@ const styles = StyleSheet.create({
   ratesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    marginBottom: 8,
+    borderBottomColor: '#e0e7ff',
+    marginBottom: 12,
   },
   ratesHeaderText: {
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: '#4f46e5',
+    fontSize: 14,
   },
   rateRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    borderBottomColor: '#eef2ff',
   },
   currencyText: {
-    color: '#333',
+    color: '#1e293b',
+    fontWeight: '600',
+    fontSize: 16,
   },
   rateText: {
-    color: '#333',
-    fontWeight: '500',
+    color: '#4f46e5',
+    fontWeight: '700',
+    fontSize: 16,
   },
 });
 

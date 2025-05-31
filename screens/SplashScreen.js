@@ -15,7 +15,7 @@ const SplashScreen = () => {
         } else {
           navigation.replace('Login');
         }
-      } catch (e) {
+      } catch {
         navigation.replace('Login');
       }
     };
@@ -26,7 +26,7 @@ const SplashScreen = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../icon/HCMCUT.svg.png')}
+        source={require('../assets/icon.png')}  // Thay bằng icon chuẩn của bạn
         style={styles.logo}
         resizeMode="contain"
       />
@@ -37,14 +37,14 @@ const SplashScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E6F3FF', // Light blue color
+    backgroundColor: '#f3f4ff', 
     justifyContent: 'center',
     alignItems: 'center',
   },
   logo: {
-    width: 200,
-    height: 200,
+    width: 180,
+    height: 180,
   },
 });
 
-export default SplashScreen; 
+export default SplashScreen;
