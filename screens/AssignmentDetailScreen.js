@@ -333,17 +333,6 @@ export default function AssignmentDetailScreen({ route, navigation }) {
           />
         )}
       </View>
-
-      {isEditing && (
-        <View style={styles.editButtons}>
-          <TouchableOpacity style={[styles.editButton, styles.saveButton]} onPress={handleUpdateAssignment}>
-            <Text style={styles.buttonText}>Save</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.editButton, styles.cancelButton]} onPress={() => setIsEditing(false)}>
-            <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </>
   );
 
@@ -356,7 +345,14 @@ export default function AssignmentDetailScreen({ route, navigation }) {
     </TouchableOpacity>
   );
 
-  const renderFooter = () => renderInfoSection();
+  const renderFooter = () => (
+    <>
+      {/* Divider line */}
+      <View style={styles.divider} />
+
+      {renderInfoSection()}
+    </>
+  );
 
   if (loading) {
     return (
@@ -500,5 +496,11 @@ const styles = StyleSheet.create({
   taskDesc: {
     fontSize: 14,
     color: '#6b7280',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#c7d2fe',
+    marginVertical: 20,
+    borderRadius: 0.5,
   },
 });
