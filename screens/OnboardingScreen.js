@@ -8,14 +8,14 @@ const slides = [
     key: '1',
     title: 'Trouble in managing task?',
     description: "We help you organize tasks effortlessly\nTurn your to-do list into done\nDon't let messy tasks slow you down",
-    image: require('../assets/icon.png'), // Thay bằng ảnh phù hợp sau
+    image: require('../assets/icon.png'), // Thay bằng ảnh phù hợp sau  
     skip: true,
   },
   {
     key: '2',
     title: 'BIKA',
     description: 'Master Your Assignments,\nHCMUT Tech Style!',
-    image: require('../assets/iconorigin.png'), // Thay bằng logo phù hợp sau
+    image: require('../assets/onboarding.png'), 
     skip: false,
   },
 ];

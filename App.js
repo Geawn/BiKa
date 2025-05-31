@@ -65,7 +65,7 @@ function TabNavigator() {
           name="HomeTab"
           component={HomeScreen}
           options={{
-            tabBarLabel: 'Trang chủ',
+            tabBarLabel: 'Home',
             tabBarIcon: ({ color, size }) => <AntDesign name="home" size={size} color={color} />,
           }}
         />
@@ -73,7 +73,7 @@ function TabNavigator() {
           name="Folder"
           component={FolderScreen}
           options={{
-            tabBarLabel: 'Bài tập',
+            tabBarLabel: 'Assignments',
             tabBarIcon: ({ color, size }) => <AntDesign name="folderopen" size={size} color={color} />,
           }}
         />
@@ -81,7 +81,7 @@ function TabNavigator() {
           name="Task"
           component={TaskScreen}
           options={{
-            tabBarLabel: 'Công việc',
+            tabBarLabel: 'Tasks',
             tabBarIcon: ({ color, size }) => <AntDesign name="checkcircleo" size={size} color={color} />,
           }}
         />
@@ -89,7 +89,7 @@ function TabNavigator() {
           name="Utility"
           component={UtilityScreen}
           options={{
-            tabBarLabel: 'Tiện ích',
+            tabBarLabel: 'Utility',
             tabBarIcon: ({ color, size }) => <AntDesign name="appstore-o" size={size} color={color} />,
           }}
         />
@@ -106,7 +106,7 @@ function TabNavigator() {
           name="Notification"
           component={NotificationScreen}
           options={{
-            tabBarLabel: 'Thông báo',
+            tabBarLabel: 'Notification',
             tabBarIcon: ({ color, size }) => <AntDesign name="bells" size={size} color={color} />,
           }}
         />
