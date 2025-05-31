@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl, Animated, Easing } from 'react-native';
 import TopBar from '../components/TopBar';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -12,30 +12,30 @@ export default function TaskScreen() {
   const [sortAsc, setSortAsc] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
-  // Fetch user ID from AsyncStorage
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        setUserId(storedUserId);
-      } catch (error) {
-        console.log('Error fetching user ID:', error);
-      }
-    };
-    getUserId();
-  }, []);
+  const animatePressIn = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 0.95,
+      duration: 100,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.ease),
+    }).start();
+  };
+  const animatePressOut = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.ease),
+    }).start();
+  };
 
-  // Đưa fetchTasks ra ngoài useEffect để có thể gọi lại khi cần
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      console.log('Bắt đầu lấy token từ AsyncStorage...');
       const token = await AsyncStorage.getItem('token');
-      console.log('Token lấy được:', token ? '[Đã có token]' : '[Không có token]');
-      console.log('Gọi API /tasks/?offset=0 ...');
       const response = await fetch(`${API_URL}/tasks/?offset=0`, {
         method: 'GET',
         headers: {
@@ -43,18 +43,9 @@ export default function TaskScreen() {
           'Content-Type': 'application/json',
         },
       });
-      console.log('Đã nhận response từ API, status:', response.status);
       const data = await response.json();
-      const mappedTasks = (data.results || []).map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        status: item.status,
-        assignee_id: userId, // Thêm assignee_id từ userId đã lưu
-      }));
-      setTasks(mappedTasks);
-    } catch (error) {
-      console.log('Lỗi khi fetch tasks:', error);
+      setTasks(data.results || []);
+    } catch {
       setTasks([]);
     } finally {
       setLoading(false);
@@ -76,23 +67,15 @@ export default function TaskScreen() {
     fetchTasks().finally(() => setRefreshing(false));
   }, []);
 
-  // Lọc và sắp xếp task
   const filteredTasks = tasks
-    .filter(
-      task =>
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(task =>
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()))
     )
-    .sort((a, b) => {
-      if (sortAsc) {
-        return a.title.localeCompare(b.title);
-      } else {
-        return b.title.localeCompare(a.title);
-      }
-    });
+    .sort((a, b) => (sortAsc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)));
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f8fafd', paddingHorizontal: 16, paddingTop: 24 }}>
+    <View style={styles.container}>
       <TopBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -101,13 +84,15 @@ export default function TaskScreen() {
       />
       <View style={styles.headerRow}>
         <Text style={styles.title}>Tasks</Text>
-        <TouchableOpacity onPress={() => setSortAsc(!sortAsc)} style={styles.filterBtn}>
-          <Feather name="filter" size={22} color="#2d2d6a" />
+        <TouchableOpacity onPress={() => setSortAsc(!sortAsc)} style={styles.filterBtn} activeOpacity={0.7}>
+          <Feather name="filter" size={24} color="#4f46e5" />
           <Text style={styles.sortText}>{sortAsc ? 'A-Z' : 'Z-A'}</Text>
         </TouchableOpacity>
       </View>
       {loading ? (
-        <Text>Đang tải...</Text>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Đang tải...</Text>
+        </View>
       ) : (
         <FlatList
           data={filteredTasks}
@@ -116,23 +101,28 @@ export default function TaskScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#2d2d6a']}
-              tintColor="#2d2d6a"
+              colors={['#4f46e5']}
+              tintColor="#4f46e5"
             />
           }
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => navigation.navigate('TaskDetail', { id: item.id })}>
-              <View style={styles.taskItem}>
-                <Text style={styles.taskTitle}>{item.title}</Text>
-                <Text style={styles.taskDesc}>{item.description}</Text>
-                {/* Có thể hiển thị status nếu muốn */}
-                {/* <Text style={{color: '#888', fontSize: 12}}>{item.status}</Text> */}
-              </View>
-            </TouchableOpacity>
+            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('TaskDetail', { id: item.id })}
+                onPressIn={animatePressIn}
+                onPressOut={animatePressOut}
+                activeOpacity={0.8}
+              >
+                <View style={styles.taskItem}>
+                  <Text style={styles.taskTitle}>{item.title}</Text>
+                  {item.description ? <Text style={styles.taskDesc}>{item.description}</Text> : null}
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
           )}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
-          contentContainerStyle={{ paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 24 }}
         />
       )}
     </View>
@@ -140,53 +130,67 @@ export default function TaskScreen() {
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f3f4ff', paddingHorizontal: 16, paddingTop: 24 },
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 16,
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2d2d6a',
-    marginLeft: 2,
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#4f46e5',
   },
   filterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e6f0fa',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: '#eef2ff',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 12,
+    shadowColor: '#aabbff',
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 7,
   },
   sortText: {
-    marginLeft: 6,
-    color: '#2d2d6a',
-    fontWeight: 'bold',
-    fontSize: 13,
+    marginLeft: 8,
+    fontWeight: '600',
+    fontSize: 16,
+    color: '#4f46e5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#6b7280',
   },
   taskItem: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
-    elevation: 1,
+    borderRadius: 14,
+    padding: 18,
+    marginVertical: 6,
+    shadowColor: '#aabbff',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
   },
   taskTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2d2d6a',
-    marginBottom: 4,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#312e81',
+    marginBottom: 6,
   },
   taskDesc: {
-    fontSize: 13,
-    color: '#6b6b8d',
+    fontSize: 14,
+    color: '#6b7280',
   },
   separator: {
-    height: 8,
+    height: 10,
   },
-}); 
+});
+

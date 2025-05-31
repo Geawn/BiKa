@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Modal, Alert, Platform } from 'react-native';
+import {
+  View, Text, StyleSheet, TextInput, ScrollView,
+  TouchableOpacity, ActivityIndicator, Modal, Alert, Platform
+} from 'react-native';
 import TopBar from '../components/TopBar';
 import { AntDesign } from '@expo/vector-icons';
 import { API_URL } from '../config/api';
@@ -34,12 +37,10 @@ export default function TaskDetailScreen({ route, navigation }) {
       try {
         const token = await AsyncStorage.getItem('token');
         if (!token) {
-          console.error('No token found');
           setError('Authentication required');
           setLoading(false);
           return;
         }
-
         const response = await fetch(`${API_URL}/tasks/${id}/`, {
           method: 'GET',
           headers: {
@@ -47,107 +48,72 @@ export default function TaskDetailScreen({ route, navigation }) {
             'Content-Type': 'application/json',
           },
         });
-
-        if (!response.ok) {
-          console.error('Failed to fetch task. Status:', response.status);
-          throw new Error('Network response was not ok');
-        }
-
+        if (!response.ok) throw new Error('Failed to fetch task');
         const data = await response.json();
-      //  console.log('Task data loaded:', data);
         setTask(data);
       } catch (err) {
-        console.error('Error loading task:', err);
         setError('Không thể tải dữ liệu task.');
       } finally {
         setLoading(false);
       }
     };
-
     fetchTaskDetail();
   }, [id]);
 
   const formatDate = (date) => {
-    console.log('Formatting date:', date);
-    const formatted = date.toLocaleDateString('vi-VN', {
+    return date.toLocaleDateString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     });
-    console.log('Formatted date:', formatted);
-    return formatted;
   };
 
   const onStartDateChange = (event, selectedDate) => {
-    console.log('Start date picker event:', event);
-    console.log('Selected start date:', selectedDate);
     setShowStartPicker(false);
     if (selectedDate) {
       setStartDate(selectedDate);
-      const updatedTask = {
-        ...editedTask,
-        start: selectedDate.toISOString()
-      };
-      console.log('Updated task with new start date:', updatedTask);
-      setEditedTask(updatedTask);
+      setEditedTask(prev => ({ ...prev, start: selectedDate.toISOString() }));
     }
   };
 
   const onEndDateChange = (event, selectedDate) => {
-    console.log('End date picker event:', event);
-    console.log('Selected end date:', selectedDate);
     setShowEndPicker(false);
     if (selectedDate) {
       setEndDate(selectedDate);
-      const updatedTask = {
-        ...editedTask,
-        end: selectedDate.toISOString()
-      };
-      console.log('Updated task with new end date:', updatedTask);
-      setEditedTask(updatedTask);
+      setEditedTask(prev => ({ ...prev, end: selectedDate.toISOString() }));
     }
   };
 
   const handleEdit = () => {
-    console.log('Starting edit mode with task:', task);
     const start = new Date(task.start);
     const end = new Date(task.end);
-    console.log('Parsed dates - Start:', start, 'End:', end);
     setStartDate(start);
     setEndDate(end);
     setAssignee(task.assignee || '');
-    const initialEditData = {
+    setEditedTask({
       ...task,
       start: task.start,
       end: task.end
-    };
-    console.log('Initial edit data:', initialEditData);
-    setEditedTask(initialEditData);
+    });
     setIsEditModalVisible(true);
   };
 
   const handleSave = async () => {
-    //console.log('Saving task with data:', editedTask);
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
-        console.error('No token found');
         Alert.alert('Error', 'Authentication required');
         return;
       }
-
       const requestBody = {
         assignment: task.assignment,
-        assignee: assignee,
+        assignee,
         title: editedTask.title,
         description: editedTask.description,
         status: editedTask.status,
         start: editedTask.start,
         end: editedTask.end
       };
-      
-      console.log('Request body:', requestBody);
-
       const response = await fetch(`${API_URL}/tasks/${id}/`, {
         method: 'PUT',
         headers: {
@@ -156,88 +122,74 @@ export default function TaskDetailScreen({ route, navigation }) {
         },
         body: JSON.stringify(requestBody),
       });
-
-      if (!response.ok) {
-        console.error('Failed to update task. Status:', response.status);
-        const errorData = await response.json();
-        console.error('Error details:', errorData);
-        throw new Error('Failed to update task');
-      }
-
+      if (!response.ok) throw new Error('Failed to update task');
       const updatedTask = await response.json();
-      console.log('Task updated successfully:', updatedTask);
       setTask(updatedTask);
       setIsEditModalVisible(false);
       Alert.alert('Success', 'Task updated successfully');
-    } catch (error) {
-      console.error('Error updating task:', error);
+    } catch {
       Alert.alert('Error', 'Failed to update task');
     }
   };
 
   const handleDelete = async () => {
-    Alert.alert(
-      'Xác nhận xóa',
-      'Bạn có chắc chắn muốn xóa task này?',
-      [
-        {
-          text: 'Hủy',
-          style: 'cancel'
-        },
-        {
-          text: 'Xóa',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const token = await AsyncStorage.getItem('token');
-              if (!token) {
-                Alert.alert('Error', 'Authentication required');
-                return;
-              }
-
-              const response = await fetch(`${API_URL}/tasks/${id}/`, {
-                method: 'DELETE',
-                headers: {
-                  'Authorization': `Token ${token}`,
-                  'Content-Type': 'application/json',
-                },
-              });
-
-              if (!response.ok) {
-                throw new Error('Failed to delete task');
-              }
-
-              Alert.alert('Success', 'Task deleted successfully');
-              navigation.goBack();
-            } catch (error) {
-              console.error('Error deleting task:', error);
-              Alert.alert('Error', 'Failed to delete task');
+    Alert.alert('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa task này?', [
+      { text: 'Hủy', style: 'cancel' },
+      { text: 'Xóa', style: 'destructive', onPress: async () => {
+          try {
+            const token = await AsyncStorage.getItem('token');
+            if (!token) {
+              Alert.alert('Error', 'Authentication required');
+              return;
             }
+            const response = await fetch(`${API_URL}/tasks/${id}/`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Token ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            if (!response.ok) throw new Error('Failed to delete task');
+            Alert.alert('Success', 'Task deleted successfully');
+            navigation.goBack();
+          } catch {
+            Alert.alert('Error', 'Failed to delete task');
           }
         }
-      ]
-    );
+      }
+    ]);
   };
 
   if (loading) {
-    return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color="#2d2d6a" /></View>;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4f46e5" />
+      </View>
+    );
   }
   if (error) {
-    return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>{error}</Text></View>;
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
   }
   if (!task) {
-    return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Không tìm thấy task</Text></View>;
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>Không tìm thấy task</Text>
+      </View>
+    );
   }
 
-  // Lấy các trường cần thiết
   const status = task.status || '';
   const assignedTo = task.assignee_data?.email || '';
   const description = task.description || '';
-  const startTime = task.start ? new Date(task.start).toLocaleString() : '';
-  const endTime = task.end ? new Date(task.end).toLocaleString() : '';
+  const startTime = task.start ? formatDate(new Date(task.start)) : '';
+  const endTime = task.end ? formatDate(new Date(task.end)) : '';
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f8fafd' }}>
+    <View style={styles.screen}>
       <TopBar
         searchQuery={''}
         setSearchQuery={() => {}}
@@ -246,37 +198,42 @@ export default function TaskDetailScreen({ route, navigation }) {
       />
       <View style={styles.titleContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <AntDesign name="arrowleft" size={24} color="#2d2d6a" />
+          <AntDesign name="arrowleft" size={26} color="#4f46e5" />
         </TouchableOpacity>
         <Text style={styles.title}>{task.title}</Text>
         <View style={styles.actionButtons}>
-          <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
-            <AntDesign name="edit" size={24} color="#2d2d6a" />
+          <TouchableOpacity onPress={handleEdit} style={styles.iconBtn}>
+            <AntDesign name="edit" size={26} color="#4f46e5" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-            <AntDesign name="delete" size={24} color="#ff3b30" />
+          <TouchableOpacity onPress={handleDelete} style={styles.iconBtn}>
+            <AntDesign name="delete" size={26} color="#ef4444" />
           </TouchableOpacity>
         </View>
       </View>
-      <ScrollView style={styles.container}>
+
+      <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.row}>
           <Text style={styles.label}>Status:</Text>
-          <View style={styles.statusBox}>
+          <View style={[styles.statusBox, status === 'completed' ? styles.statusCompleted : styles.statusDefault]}>
             <Text style={styles.statusText}>{status}</Text>
           </View>
         </View>
+
         <View style={styles.row}>
           <Text style={styles.label}>Assigned to:</Text>
           <TextInput style={styles.input} value={assignedTo} editable={false} />
         </View>
-        <Text style={styles.label}>Description</Text>
-        <View style={styles.descBox}>
-          <Text style={styles.descText}>{description}</Text>
+
+        <Text style={styles.sectionLabel}>Description</Text>
+        <View style={styles.descriptionBox}>
+          <Text style={styles.descriptionText}>{description}</Text>
         </View>
+
         <View style={styles.row}>
           <Text style={styles.label}>Start time:</Text>
           <TextInput style={styles.input} value={startTime} editable={false} />
         </View>
+
         <View style={styles.row}>
           <Text style={styles.label}>End time:</Text>
           <TextInput style={styles.input} value={endTime} editable={false} />
@@ -289,28 +246,28 @@ export default function TaskDetailScreen({ route, navigation }) {
         transparent={true}
         onRequestClose={() => setIsEditModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit Task</Text>
               <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
-                <AntDesign name="close" size={24} color="#2d2d6a" />
+                <AntDesign name="close" size={26} color="#4f46e5" />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.modalScroll}>
               <Text style={styles.label}>Title</Text>
               <TextInput
                 style={[styles.input, styles.largeInput]}
                 value={editedTask?.title}
-                onChangeText={(text) => setEditedTask({...editedTask, title: text})}
+                onChangeText={text => setEditedTask({ ...editedTask, title: text })}
               />
 
               <Text style={styles.label}>Description</Text>
               <TextInput
                 style={[styles.input, styles.largeTextArea]}
                 value={editedTask?.description}
-                onChangeText={(text) => setEditedTask({...editedTask, description: text})}
+                onChangeText={text => setEditedTask({ ...editedTask, description: text })}
                 multiline
                 numberOfLines={6}
               />
@@ -319,25 +276,25 @@ export default function TaskDetailScreen({ route, navigation }) {
               <TextInput
                 style={[styles.input, styles.largeInput]}
                 value={assignee}
-                onChangeText={(text) => setAssignee(text)}
+                onChangeText={setAssignee}
                 keyboardType="numeric"
                 placeholder="Enter assignee ID"
               />
 
               <Text style={styles.label}>Status</Text>
-              <View style={styles.statusContainer}>
-                {statusOptions.map((option) => (
+              <View style={styles.statusOptions}>
+                {statusOptions.map(option => (
                   <TouchableOpacity
                     key={option.value}
                     style={[
                       styles.statusOption,
-                      editedTask?.status === option.value && styles.selectedStatus
+                      editedTask?.status === option.value && styles.statusOptionSelected
                     ]}
-                    onPress={() => setEditedTask({...editedTask, status: option.value})}
+                    onPress={() => setEditedTask({ ...editedTask, status: option.value })}
                   >
                     <Text style={[
                       styles.statusOptionText,
-                      editedTask?.status === option.value && styles.selectedStatusText
+                      editedTask?.status === option.value && styles.statusOptionTextSelected
                     ]}>
                       {option.label}
                     </Text>
@@ -346,18 +303,12 @@ export default function TaskDetailScreen({ route, navigation }) {
               </View>
 
               <Text style={styles.label}>Start Time</Text>
-              <TouchableOpacity 
-                style={[styles.input, styles.dateInput]}
-                onPress={() => setShowStartPicker(true)}
-              >
+              <TouchableOpacity style={[styles.input, styles.dateInput]} onPress={() => setShowStartPicker(true)}>
                 <Text>{editedTask?.start ? formatDate(new Date(editedTask.start)) : 'Select start time'}</Text>
               </TouchableOpacity>
 
               <Text style={styles.label}>End Time</Text>
-              <TouchableOpacity 
-                style={[styles.input, styles.dateInput]}
-                onPress={() => setShowEndPicker(true)}
-              >
+              <TouchableOpacity style={[styles.input, styles.dateInput]} onPress={() => setShowEndPicker(true)}>
                 <Text>{editedTask?.end ? formatDate(new Date(editedTask.end)) : 'Select end time'}</Text>
               </TouchableOpacity>
 
@@ -368,7 +319,6 @@ export default function TaskDetailScreen({ route, navigation }) {
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={onStartDateChange}
                   minimumDate={new Date()}
-                  onError={(error) => console.error('Start date picker error:', error)}
                 />
               )}
 
@@ -379,23 +329,16 @@ export default function TaskDetailScreen({ route, navigation }) {
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={onEndDateChange}
                   minimumDate={startDate}
-                  onError={(error) => console.error('End date picker error:', error)}
                 />
               )}
             </ScrollView>
 
             <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => setIsEditModalVisible(false)}
-              >
-                <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setIsEditModalVisible(false)}>
+                <Text style={[styles.modalButtonText, styles.cancelButtonText]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
-                onPress={handleSave}
-              >
-                <Text style={styles.buttonText}>Save</Text>
+              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleSave}>
+                <Text style={styles.modalButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -406,178 +349,204 @@ export default function TaskDetailScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: '#f8fafd',
-    padding: 16,
+    backgroundColor: '#f3f4ff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ef4444',
   },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
     paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: '#eef2ff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#c7d2fe',
   },
   backButton: {
-    marginRight: 8,
+    marginRight: 12,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2d2d6a',
     flex: 1,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#4f46e5',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+  },
+  iconBtn: {
+    marginLeft: 16,
+    padding: 8,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 20,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 18,
   },
   label: {
-    fontWeight: 'bold',
-    color: '#2d2d6a',
     width: 110,
+    fontWeight: '700',
     fontSize: 15,
+    color: '#4f46e5',
   },
   statusBox: {
-    backgroundColor: '#2ecc40',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 2,
-    marginLeft: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  statusCompleted: {
+    backgroundColor: '#22c55e',
+  },
+  statusDefault: {
+    backgroundColor: '#818cf8',
   },
   statusText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 13,
+    textTransform: 'capitalize',
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 6,
-    backgroundColor: '#f4f4f4',
-    color: '#2d2d6a',
-    fontSize: 14,
+    backgroundColor: '#e0e7ff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    color: '#3730a3',
+    fontSize: 15,
   },
-  descBox: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 8,
-    backgroundColor: '#f4f4f4',
-    marginBottom: 16,
+  sectionLabel: {
+    fontWeight: '700',
+    fontSize: 18,
+    color: '#4f46e5',
+    marginBottom: 8,
+    marginTop: 10,
   },
-  descText: {
-    color: '#2d2d6a',
-    fontSize: 14,
+  descriptionBox: {
+    backgroundColor: '#e0e7ff',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
   },
-  editButton: {
-    padding: 8,
+  descriptionText: {
+    fontSize: 15,
+    color: '#3730a3',
   },
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(79, 70, 229, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: '90%',
+    maxHeight: '80%',
+    padding: 24,
+    shadowColor: '#4f46e5',
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 15,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    marginBottom: 18,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4f46e5',
   },
   modalScroll: {
-    maxHeight: '70%',
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    marginTop: 10,
+    maxHeight: '65%',
   },
   largeInput: {
     height: 50,
     fontSize: 16,
-    padding: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginBottom: 16,
+    backgroundColor: '#e0e7ff',
+    borderRadius: 12,
   },
   largeTextArea: {
     height: 120,
-    fontSize: 16,
-    padding: 12,
     textAlignVertical: 'top',
   },
   dateInput: {
-    height: 50,
     justifyContent: 'center',
-    padding: 12,
   },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    width: '90%',
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2d2d6a',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  statusContainer: {
+  statusOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: 20,
   },
   statusOption: {
-    padding: 8,
-    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2d2d6a',
-    margin: 4,
+    borderColor: '#4f46e5',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginRight: 10,
+    marginBottom: 10,
   },
-  selectedStatus: {
-    backgroundColor: '#2d2d6a',
+  statusOptionSelected: {
+    backgroundColor: '#4f46e5',
   },
   statusOptionText: {
-    color: '#2d2d6a',
+    color: '#4f46e5',
+    fontWeight: '600',
   },
-  selectedStatusText: {
-    color: 'white',
+  statusOptionTextSelected: {
+    color: '#fff',
   },
-  button: {
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
     flex: 1,
-    padding: 15,
-    borderRadius: 10,
-    marginHorizontal: 5,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginHorizontal: 6,
   },
   cancelButton: {
-    backgroundColor: '#f4f4f4',
+    backgroundColor: '#d1d5db',
   },
   cancelButtonText: {
-    color: '#2d2d6a',
-  },
-  saveButton: {
-    backgroundColor: '#2d2d6a',
-  },
-  buttonText: {
-    color: 'white',
+    color: '#4b5563',
+    fontWeight: '700',
     textAlign: 'center',
-    fontWeight: 'bold',
     fontSize: 16,
   },
-  actionButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  saveButton: {
+    backgroundColor: '#4f46e5',
   },
-  deleteButton: {
-    padding: 8,
-    marginLeft: 8,
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    textAlign: 'center',
+    fontSize: 16,
   },
-}); 
+});
