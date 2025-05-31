@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   Image, RefreshControl, Dimensions
@@ -7,6 +7,7 @@ import { AntDesign, Feather } from '@expo/vector-icons';
 import TopBar from '../components/TopBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config/api';
+import { useFocusEffect } from '@react-navigation/native';
 
 const screenWidth = Dimensions.get('window').width;
 const HORIZONTAL_PADDING = 32;
@@ -97,6 +98,19 @@ export default function FolderScreen({ navigation, route }) {
       navigation.setParams({ refresh: undefined });
     }
   }, [route.params?.refresh]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkForUpdates = async () => {
+        const updated = await AsyncStorage.getItem('assignmentUpdated');
+        if (updated === 'true') {
+          await AsyncStorage.removeItem('assignmentUpdated');
+          fetchAssignments();
+        }
+      };
+      checkForUpdates();
+    }, [])
+  );
 
   useEffect(() => {
     fetchAssignments();

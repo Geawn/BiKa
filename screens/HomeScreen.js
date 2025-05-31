@@ -49,7 +49,8 @@ const HomeScreen = ({ navigation }) => {
         return;
       }
       const user = JSON.parse(userData);
-      const response = await fetch(`${API_ENDPOINTS.TASKS}?offset=0&assignee_id=${user.id}&limit=7&ordering=created`);
+      const param = user.role === 'lecturer' ? 'creator_id' : 'assignee_id';
+      const response = await fetch(`${API_ENDPOINTS.TASKS}?${param}=${user.id}`);
       const data = await response.json();
       setTasks(data.results);
     } catch {

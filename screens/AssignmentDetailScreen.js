@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  FlatList, ActivityIndicator, Alert, Platform
+  FlatList, ActivityIndicator, Alert, Platform, Modal, ScrollView
 } from 'react-native';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import TopBar from '../components/TopBar';
@@ -15,7 +15,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
   const [assignmentData, setAssignmentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editedData, setEditedData] = useState({
     title: '',
     description: '',
@@ -46,13 +46,13 @@ export default function AssignmentDetailScreen({ route, navigation }) {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
 
-      let url = `${API_URL}/tasks/?assignment_id=${assignment.id}&limit=10&offset=0`;
+      let url = `${API_URL}/tasks/?assignment_id=${assignment.id}`;
       
       const userStr = await AsyncStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
         // Nếu KHÔNG phải giáo viên (hoặc role đặc biệt), luôn truyền assignee_id
-        if (user.role !== 'teacher' && user.role !== 'admin') {
+        if (user.role === 'student') {
           url += `&assignee_id=${user.id}`;
         }
       }
@@ -146,7 +146,9 @@ export default function AssignmentDetailScreen({ route, navigation }) {
       if (response.ok) {
         const updatedData = await response.json();
         setAssignmentData(updatedData);
-        setIsEditing(false);
+        setIsEditModalVisible(false);
+        // Set flag in AsyncStorage to indicate assignment was updated
+        await AsyncStorage.setItem('assignmentUpdated', 'true');
         Alert.alert('Thành công', 'Cập nhật assignment thành công');
       } else {
         Alert.alert('Lỗi', 'Cập nhật assignment thất bại');
@@ -194,23 +196,12 @@ export default function AssignmentDetailScreen({ route, navigation }) {
     );
   };
 
-  const formatDate = (date) =>
-    date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-  const onStartDateChange = (event, selectedDate) => {
-    setShowStartPicker(false);
-    if (selectedDate) {
-      setStartDate(selectedDate);
-      setEditedData({ ...editedData, start: selectedDate.toISOString() });
-    }
-  };
-
-  const onEndDateChange = (event, selectedDate) => {
-    setShowEndPicker(false);
-    if (selectedDate) {
-      setEndDate(selectedDate);
-      setEditedData({ ...editedData, deadline: selectedDate.toISOString() });
-    }
+  const formatDate = (date) => {
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   const startEditing = () => {
@@ -225,7 +216,23 @@ export default function AssignmentDetailScreen({ route, navigation }) {
       start: assignmentData.start,
       deadline: assignmentData.deadline
     });
-    setIsEditing(true);
+    setIsEditModalVisible(true);
+  };
+
+  const onStartDateChange = (event, selectedDate) => {
+    setShowStartPicker(false);
+    if (selectedDate) {
+      setStartDate(selectedDate);
+      setEditedData(prev => ({ ...prev, start: selectedDate.toISOString() }));
+    }
+  };
+
+  const onEndDateChange = (event, selectedDate) => {
+    setShowEndPicker(false);
+    if (selectedDate) {
+      setEndDate(selectedDate);
+      setEditedData(prev => ({ ...prev, deadline: selectedDate.toISOString() }));
+    }
   };
 
   const renderHeader = () => (
@@ -234,7 +241,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <AntDesign name="arrowleft" size={28} color="#4f46e5" />
         </TouchableOpacity>
-        {isEditing ? (
+        {isEditModalVisible ? (
           <TextInput
             style={[styles.title, styles.editInput]}
             value={editedData.title}
@@ -244,7 +251,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         ) : (
           <Text style={styles.title}>{assignmentData?.title || assignment.title}</Text>
         )}
-        {!isEditing && role !== 'student' && (
+        {!isEditModalVisible && role !== 'student' && (
           <View style={styles.actionButtons}>
             <TouchableOpacity onPress={startEditing} style={styles.editButton}>
               <Feather name="edit" size={24} color="#4f46e5" />
@@ -272,11 +279,11 @@ export default function AssignmentDetailScreen({ route, navigation }) {
       <View style={styles.infoBox}>
         <Text style={styles.infoLabel}>Description</Text>
         <TextInput
-          style={[styles.infoInput, isEditing && styles.editInput]}
-          value={isEditing ? editedData.description : (assignmentData?.description || '')}
+          style={[styles.infoInput, isEditModalVisible && styles.editInput]}
+          value={isEditModalVisible ? editedData.description : (assignmentData?.description || '')}
           multiline
-          editable={isEditing}
-          onChangeText={text => isEditing && setEditedData({ ...editedData, description: text })}
+          editable={isEditModalVisible}
+          onChangeText={text => isEditModalVisible && setEditedData({ ...editedData, description: text })}
         />
       </View>
 
@@ -291,7 +298,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
 
       <View style={styles.infoBox}>
         <Text style={styles.infoLabel}>Start time</Text>
-        {isEditing ? (
+        {isEditModalVisible ? (
           <TouchableOpacity onPress={() => setShowStartPicker(true)}>
             <TextInput
               style={[styles.infoInput, styles.editInput]}
@@ -320,7 +327,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
 
       <View style={styles.infoBox}>
         <Text style={styles.infoLabel}>End time</Text>
-        {isEditing ? (
+        {isEditModalVisible ? (
           <TouchableOpacity onPress={() => setShowEndPicker(true)}>
             <TextInput
               style={[styles.infoInput, styles.editInput]}
@@ -392,6 +399,92 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
       />
+      <Modal
+        visible={isEditModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Assignment</Text>
+              <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
+                <AntDesign name="close" size={26} color="#4f46e5" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll}>
+              <Text style={styles.label}>Title</Text>
+              <TextInput
+                style={[styles.input, styles.largeInput]}
+                value={editedData?.title}
+                onChangeText={text => setEditedData(prev => ({ ...prev, title: text }))}
+              />
+
+              <Text style={styles.label}>Description</Text>
+              <TextInput
+                style={[styles.input, styles.largeTextArea]}
+                value={editedData?.description}
+                onChangeText={text => setEditedData(prev => ({ ...prev, description: text }))}
+                multiline
+                numberOfLines={6}
+              />
+
+              <Text style={styles.label}>Start Time</Text>
+              <TouchableOpacity 
+                style={[styles.input, styles.dateInput]} 
+                onPress={() => setShowStartPicker(true)}
+              >
+                <Text>{editedData?.start ? formatDate(new Date(editedData.start)) : 'Select start time'}</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.label}>End Time</Text>
+              <TouchableOpacity 
+                style={[styles.input, styles.dateInput]} 
+                onPress={() => setShowEndPicker(true)}
+              >
+                <Text>{editedData?.deadline ? formatDate(new Date(editedData.deadline)) : 'Select end time'}</Text>
+              </TouchableOpacity>
+
+              {showStartPicker && (
+                <DateTimePicker
+                  value={startDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onStartDateChange}
+                  minimumDate={new Date()}
+                />
+              )}
+
+              {showEndPicker && (
+                <DateTimePicker
+                  value={endDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onEndDateChange}
+                  minimumDate={startDate}
+                />
+              )}
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={() => setIsEditModalVisible(false)}
+              >
+                <Text style={[styles.modalButtonText, styles.cancelButtonText]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.saveButton]} 
+                onPress={handleUpdateAssignment}
+              >
+                <Text style={styles.modalButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -516,5 +609,97 @@ const styles = StyleSheet.create({
     backgroundColor: '#c7d2fe',
     marginVertical: 20,
     borderRadius: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(79, 70, 229, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: '90%',
+    maxHeight: '80%',
+    padding: 24,
+    shadowColor: '#4f46e5',
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 15,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4f46e5',
+  },
+  modalScroll: {
+    flex: 1,
+    marginBottom: 20,
+  },
+  label: {
+    fontWeight: '700',
+    fontSize: 15,
+    color: '#4f46e5',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#e0e7ff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    color: '#3730a3',
+    fontSize: 15,
+    marginBottom: 16,
+  },
+  largeInput: {
+    height: 50,
+    fontSize: 16,
+  },
+  largeTextArea: {
+    height: 120,
+    textAlignVertical: 'top',
+  },
+  dateInput: {
+    justifyContent: 'center',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e7ff',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginHorizontal: 6,
+  },
+  cancelButton: {
+    backgroundColor: '#d1d5db',
+  },
+  cancelButtonText: {
+    color: '#4b5563',
+    fontWeight: '700',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  saveButton: {
+    backgroundColor: '#4f46e5',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    textAlign: 'center',
+    fontSize: 16,
   },
 });
