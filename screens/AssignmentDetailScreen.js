@@ -27,6 +27,20 @@ export default function AssignmentDetailScreen({ route, navigation }) {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
 
+  const [role, setRole] = useState(null); // State lưu role
+
+  // Lấy role user khi component mount
+  useEffect(() => {
+    const getUserRole = async () => {
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setRole(user.role);
+      }
+    };
+    getUserRole();
+  }, []);
+
   const fetchTasks = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -217,7 +231,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         ) : (
           <Text style={styles.title}>{assignmentData?.title || assignment.title}</Text>
         )}
-        {!isEditing && (
+        {!isEditing && role !== 'student' && (
           <View style={styles.actionButtons}>
             <TouchableOpacity onPress={startEditing} style={styles.editButton}>
               <Feather name="edit" size={24} color="#4f46e5" />
@@ -231,9 +245,11 @@ export default function AssignmentDetailScreen({ route, navigation }) {
 
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Tasks</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('CreateTaskScreen', { assignmentId: assignment.id })}>
-          <AntDesign name="pluscircleo" size={26} color="#4f46e5" />
-        </TouchableOpacity>
+        {role !== 'student' && (
+          <TouchableOpacity onPress={() => navigation.navigate('CreateTaskScreen', { assignmentId: assignment.id })}>
+            <AntDesign name="pluscircleo" size={26} color="#4f46e5" />
+          </TouchableOpacity>
+        )}
       </View>
     </>
   );

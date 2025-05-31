@@ -21,6 +21,7 @@ export default function TaskDetailScreen({ route, navigation }) {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [assignee, setAssignee] = useState('');
+  const [role, setRole] = useState(null);  // Thêm state role
 
   const statusOptions = [
     { value: 'backlog', label: 'In Backlog' },
@@ -30,6 +31,18 @@ export default function TaskDetailScreen({ route, navigation }) {
     { value: 'completed', label: 'Completed' },
     { value: 'canceled', label: 'Canceled' }
   ];
+
+  useEffect(() => {
+    // Lấy role user
+    const getUserRole = async () => {
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setRole(user.role);
+      }
+    };
+    getUserRole();
+  }, []);
 
   useEffect(() => {
     const fetchTaskDetail = async () => {
@@ -201,14 +214,17 @@ export default function TaskDetailScreen({ route, navigation }) {
           <AntDesign name="arrowleft" size={26} color="#4f46e5" />
         </TouchableOpacity>
         <Text style={styles.title}>{task.title}</Text>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity onPress={handleEdit} style={styles.iconBtn}>
-            <AntDesign name="edit" size={26} color="#4f46e5" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete} style={styles.iconBtn}>
-            <AntDesign name="delete" size={26} color="#ef4444" />
-          </TouchableOpacity>
-        </View>
+        {/* Ẩn nút sửa xóa nếu role là student */}
+        {role !== 'student' && (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity onPress={handleEdit} style={styles.iconBtn}>
+              <AntDesign name="edit" size={26} color="#4f46e5" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDelete} style={styles.iconBtn}>
+              <AntDesign name="delete" size={26} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>

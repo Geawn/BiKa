@@ -13,6 +13,8 @@ export default function TaskScreen() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [role, setRole] = useState(null);  // Thêm state role
+
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const animatePressIn = () => {
@@ -32,17 +34,61 @@ export default function TaskScreen() {
     }).start();
   };
 
+  useEffect(() => {
+    const getUserRole = async () => {
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setRole(user.role);
+      }
+    };
+    getUserRole();
+  }, []);
+
   const fetchTasks = async () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`${API_URL}/tasks/?offset=0`, {
+      const userStr = await AsyncStorage.getItem('user');
+      if (!token || !userStr) return;
+      const user = JSON.parse(userStr);
+      let params;
+      if (user.role === 'student') {
+          params = {
+            assignee_id: user.id,
+            creator_id: '',
+            offset: 0,
+            ordering: 'start',
+            search: '',
+          };
+      }
+      else if (user.role === 'lecturer') {
+          params = {
+            assignee_id: '',
+            creator_id: user.id,
+            offset: 0,
+            ordering: 'start',
+            search: '',
+          };
+      }
+      else {
+          params = {
+            offset: 0,
+            ordering: 'start',
+            search: '',
+          }
+      }
+      const queryString = Object.entries(params)
+        .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
+        .join('&');
+      const response = await fetch(`${API_URL}/tasks/?${queryString}`, {
         method: 'GET',
         headers: {
           'Authorization': `Token ${token}`,
           'Content-Type': 'application/json',
         },
       });
+
       const data = await response.json();
       setTasks(data.results || []);
     } catch {
@@ -88,6 +134,15 @@ export default function TaskScreen() {
           <Feather name="filter" size={24} color="#4f46e5" />
           <Text style={styles.sortText}>{sortAsc ? 'A-Z' : 'Z-A'}</Text>
         </TouchableOpacity>
+        {/* Nếu không phải student mới hiện nút thêm task */}
+        {role !== 'student' && (
+          <TouchableOpacity
+            style={{ marginLeft: 16 }}
+            onPress={() => navigation.navigate('CreateTaskScreen')}
+          >
+            <Feather name="plus-circle" size={28} color="#4f46e5" />
+          </TouchableOpacity>
+        )}
       </View>
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -133,7 +188,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4ff', paddingHorizontal: 16, paddingTop: 24 },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start', // chỉnh lại để nút thêm task không bị đẩy quá xa
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -141,6 +196,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '700',
     color: '#4f46e5',
+    marginRight: 16,
   },
   filterBtn: {
     flexDirection: 'row',
@@ -193,4 +249,3 @@ const styles = StyleSheet.create({
     height: 10,
   },
 });
-

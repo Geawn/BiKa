@@ -19,6 +19,7 @@ export default function FolderScreen({ navigation, route }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortAsc, setSortAsc] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [role, setRole] = useState(null);  // Lưu role người dùng
 
   const fetchAssignments = async () => {
     try {
@@ -26,13 +27,34 @@ export default function FolderScreen({ navigation, route }) {
       const userStr = await AsyncStorage.getItem('user');
       if (!token || !userStr) return;
       const user = JSON.parse(userStr);
-      const params = {
-        creator_id: user.id,
-        limit: 10,
-        offset: 0,
-        ordering: 'start',
-        search: '',
-      };
+      let params;
+      if (user.role === 'student') {
+        params = {
+          assignee_id: user.id,
+          creator_id: '',
+          limit: 10,
+          offset: 0,
+          ordering: 'start',
+          search: '',
+        };
+      } else if (user.role === 'lecturer') {
+        params = {
+          assignee_id: '',
+          creator_id: user.id,
+          limit: 10,
+          offset: 0,
+          ordering: 'start',
+          search: '',
+        };
+      } else {
+        params = {
+          limit: 10,
+          offset: 0,
+          ordering: 'start',
+          search: '',
+        };
+      }
+
       const queryString = Object.entries(params)
         .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
         .join('&');
@@ -56,6 +78,18 @@ export default function FolderScreen({ navigation, route }) {
       console.error(error);
     }
   };
+
+  // Lấy role người dùng khi component mount
+  useEffect(() => {
+    const getUserRole = async () => {
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setRole(user.role);
+      }
+    };
+    getUserRole();
+  }, []);
 
   useEffect(() => {
     if (route.params?.refresh) {
@@ -95,9 +129,12 @@ export default function FolderScreen({ navigation, route }) {
             <Feather name="filter" size={24} color="#4f46e5" />
             <Text style={styles.sortText}>{sortAsc ? 'Oldest' : 'Newest'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('CreateAssignment')} style={styles.iconBtn}>
-            <AntDesign name="pluscircleo" size={26} color="#4f46e5" />
-          </TouchableOpacity>
+          {/* Ẩn nút Thêm nếu role là student */}
+          {role !== 'student' && (
+            <TouchableOpacity onPress={() => navigation.navigate('CreateAssignment')} style={styles.iconBtn}>
+              <AntDesign name="pluscircleo" size={26} color="#4f46e5" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 

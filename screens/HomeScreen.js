@@ -102,10 +102,6 @@ const HomeScreen = ({ navigation }) => {
         isToday: today.toDateString() === d.toDateString(),
       });
     }
-    console.log('Date Range:', days.map(item => ({
-      date: item.date.toDateString(),
-      isToday: item.isToday
-    }))); // Debugging log
     return days;
   };
 
@@ -149,13 +145,11 @@ const HomeScreen = ({ navigation }) => {
     if (!loading && flatListRef.current) {
       const dateRange = getDateRange();
       const todayIndex = dateRange.findIndex(item => item.isToday);
-      console.log('Today Index:', todayIndex, 'Date Range Length:', dateRange.length); // Debugging log
       if (todayIndex !== -1) {
         setTimeout(() => {
           try {
             if (flatListRef.current) {
               flatListRef.current.scrollToIndex({ index: todayIndex, animated: false, viewPosition: 0.5 });
-              console.log('Scrolled to todayIndex:', todayIndex); // Debugging log
             } else {
               console.warn('flatListRef.current is null in useEffect');
             }
