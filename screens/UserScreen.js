@@ -93,7 +93,11 @@ const UserScreen = ({ navigation }) => {
           <Text style={styles.menuText}>Edit Profile</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('SettingsScreen')}
+          activeOpacity={0.7}
+        >
           <AntDesign name="setting" size={24} color="#4f46e5" />
           <Text style={styles.menuText}>Account Settings</Text>
         </TouchableOpacity>
