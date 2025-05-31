@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, Platform
+  ScrollView, Alert, Platform, Modal
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -40,12 +40,19 @@ export default function CreateTaskScreen({ navigation, route }) {
 
   const onStartDateChange = (event, selectedDate) => {
     setShowStartPicker(false);
-    if (selectedDate) setStartDate(selectedDate);
+    if (selectedDate) {
+      setStartDate(selectedDate);
+      if (endDate < selectedDate) {
+        setEndDate(selectedDate);
+      }
+    }
   };
 
   const onEndDateChange = (event, selectedDate) => {
     setShowEndPicker(false);
-    if (selectedDate) setEndDate(selectedDate);
+    if (selectedDate) {
+      setEndDate(selectedDate);
+    }
   };
 
   const handleCreateTask = async () => {
@@ -123,7 +130,10 @@ export default function CreateTaskScreen({ navigation, route }) {
         <View style={styles.row}>
           <View style={styles.dateWrapper}>
             <Text style={styles.label}>Start Time <Text style={{color: 'red'}}>*</Text></Text>
-            <TouchableOpacity onPress={() => setShowStartPicker(true)}>
+            <TouchableOpacity onPress={() => {
+              setShowStartPicker(true);
+              setShowEndPicker(false);
+            }}>
               <TextInput
                 style={styles.input}
                 value={formatDate(startDate)}
@@ -132,19 +142,35 @@ export default function CreateTaskScreen({ navigation, route }) {
               />
             </TouchableOpacity>
             {showStartPicker && (
-              <DateTimePicker
-                value={startDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onStartDateChange}
-                minimumDate={new Date()}
-              />
+              <Modal transparent={true} animationType="fade" visible={showStartPicker}>
+                <View style={styles.modalContainer}>
+                  <View style={styles.pickerContainer}>
+                    <DateTimePicker
+                      value={startDate}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={onStartDateChange}
+                      minimumDate={new Date()}
+                      style={styles.datePicker}
+                    />
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={() => setShowStartPicker(false)}
+                    >
+                      <Text style={styles.closeButtonText}>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
             )}
           </View>
 
           <View style={styles.dateWrapper}>
             <Text style={styles.label}>End Time <Text style={{color: 'red'}}>*</Text></Text>
-            <TouchableOpacity onPress={() => setShowEndPicker(true)}>
+            <TouchableOpacity onPress={() => {
+              setShowEndPicker(true);
+              setShowStartPicker(false);
+            }}>
               <TextInput
                 style={styles.input}
                 value={formatDate(endDate)}
@@ -153,13 +179,26 @@ export default function CreateTaskScreen({ navigation, route }) {
               />
             </TouchableOpacity>
             {showEndPicker && (
-              <DateTimePicker
-                value={endDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onEndDateChange}
-                minimumDate={startDate}
-              />
+              <Modal transparent={true} animationType="fade" visible={showEndPicker}>
+                <View style={styles.modalContainer}>
+                  <View style={styles.pickerContainer}>
+                    <DateTimePicker
+                      value={endDate}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={onEndDateChange}
+                      minimumDate={startDate}
+                      style={styles.datePicker}
+                    />
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={() => setShowEndPicker(false)}
+                    >
+                      <Text style={styles.closeButtonText}>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
             )}
           </View>
         </View>
@@ -297,5 +336,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 18,
   },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  pickerContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    width: '90%',
+    maxWidth: 400,
+  },
+  datePicker: {
+    width: '100%',
+  },
+  closeButton: {
+    marginTop: 16,
+    backgroundColor: '#4f46e5',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
 });
- 

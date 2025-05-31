@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, RefreshControl } from 'react-native';
+import {
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  Image, RefreshControl, Dimensions
+} from 'react-native';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import TopBar from '../components/TopBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config/api';
+
+const screenWidth = Dimensions.get('window').width;
+const HORIZONTAL_PADDING = 32;
+const ITEM_MARGIN = 12;
+const NUM_COLUMNS = 2;
+const cardWidth = (screenWidth - HORIZONTAL_PADDING - ITEM_MARGIN * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
 export default function FolderScreen({ navigation, route }) {
   const [assignments, setAssignments] = useState([]);
@@ -17,7 +26,6 @@ export default function FolderScreen({ navigation, route }) {
       const userStr = await AsyncStorage.getItem('user');
       if (!token || !userStr) return;
       const user = JSON.parse(userStr);
-      // Lấy id từ user lưu trong bộ nhớ
       const params = {
         creator_id: user.id,
         limit: 10,
@@ -35,7 +43,6 @@ export default function FolderScreen({ navigation, route }) {
           'Content-Type': 'application/json',
         },
       });
-      console.log('GET /assignments/ status:', response.status);
       const data = await response.json();
       const assignments = (data.results || []).map(item => ({
         id: item.id.toString(),
@@ -50,11 +57,9 @@ export default function FolderScreen({ navigation, route }) {
     }
   };
 
-  // Thêm useEffect để xử lý refresh
   useEffect(() => {
     if (route.params?.refresh) {
       fetchAssignments();
-      // Reset params sau khi refresh
       navigation.setParams({ refresh: undefined });
     }
   }, [route.params?.refresh]);
@@ -76,7 +81,7 @@ export default function FolderScreen({ navigation, route }) {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff', padding: 16 }}>
+    <View style={styles.container}>
       <TopBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -85,60 +90,115 @@ export default function FolderScreen({ navigation, route }) {
       />
       <View style={styles.headerRow}>
         <Text style={styles.title}>Assignments</Text>
-        <View style={{ flexDirection: 'row' }}>
+        <View style={styles.headerActions}>
           <TouchableOpacity onPress={() => setSortAsc(!sortAsc)} style={styles.iconBtn}>
-            <Feather name="filter" size={22} color="#333" />
+            <Feather name="filter" size={24} color="#4f46e5" />
+            <Text style={styles.sortText}>{sortAsc ? 'Oldest' : 'Newest'}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('CreateAssignment')} style={styles.iconBtn}>
-            <AntDesign name="pluscircleo" size={22} color="#333" />
+            <AntDesign name="pluscircleo" size={26} color="#4f46e5" />
           </TouchableOpacity>
         </View>
       </View>
+
       <FlatList
         data={filtered}
         keyExtractor={item => item.id}
-        numColumns={2}
+        numColumns={NUM_COLUMNS}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#2d2d6a']}
-            tintColor="#2d2d6a"
+            colors={['#4f46e5']}
+            tintColor="#4f46e5"
           />
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('AssignmentDetailScreen', { assignment: item })}
-            style={{ width: '48%', margin: '1%' }}
-          >
-            <View style={styles.card}>
-              <Image source={require('../assets/icon.png')} style={styles.cardImg} />
-              <View style={styles.cardContent}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+        renderItem={({ item, index }) => {
+          const marginRight = (index + 1) % NUM_COLUMNS === 0 ? 0 : ITEM_MARGIN;
+          return (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('AssignmentDetailScreen', { assignment: item })}
+              style={[styles.cardWrapper, { width: cardWidth, marginRight }]}
+              activeOpacity={0.8}
+            >
+              <View style={styles.card}>
+                <Image source={require('../assets/icon.png')} style={styles.cardImg} />
+                <View style={styles.cardContent}>
                   <Text style={styles.cardName}>{item.name}</Text>
+                  <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                  <Text style={styles.cardDate}>Start: {item.start}</Text>
+                  <Text style={styles.cardDate}>Deadline: {item.deadline}</Text>
                 </View>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardDate}>Start: {item.start}</Text>
-                <Text style={styles.cardDate}>Deadline: {item.deadline}</Text>
               </View>
-            </View>
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={{ paddingBottom: 16 }}
+            </TouchableOpacity>
+          );
+        }}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#2d2d6a' },
-  iconBtn: { marginLeft: 12 },
-  card: { flex: 1, backgroundColor: '#f8fafc', borderRadius: 16, margin: 8, padding: 12, elevation: 2 },
-  cardImg: { width: '100%', height: 60, borderRadius: 8, marginBottom: 8, resizeMode: 'cover' },
-  cardContent: {},
-  cardAvatar: { width: 24, height: 24, borderRadius: 12, marginRight: 6 },
-  cardName: { fontWeight: 'bold', color: '#2d2d6a' },
-  cardTitle: { fontWeight: 'bold', fontSize: 15, marginVertical: 2 },
-  cardDate: { fontSize: 12, color: '#888' },
+  container: { flex: 1, backgroundColor: '#f3f4ff', paddingHorizontal: 16, paddingTop: 16 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  title: { fontSize: 24, fontWeight: '700', color: '#4f46e5' },
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
+  iconBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 16,
+    backgroundColor: '#eef2ff',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    shadowColor: '#4f46e5',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  sortText: {
+    marginLeft: 6,
+    fontWeight: '600',
+    color: '#4f46e5',
+    fontSize: 14,
+  },
+  cardWrapper: {
+    borderRadius: 16,
+    shadowColor: '#4f46e5',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
+    backgroundColor: '#fff',
+    marginBottom: 16,
+  },
+  card: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  cardImg: {
+    width: '100%',
+    height: 80,
+    resizeMode: 'cover',
+  },
+  cardContent: {
+    padding: 12,
+  },
+  cardName: {
+    fontWeight: '700',
+    color: '#4f46e5',
+    marginBottom: 6,
+    fontSize: 14,
+  },
+  cardTitle: {
+    fontWeight: '600',
+    fontSize: 16,
+    color: '#1e293b',
+    marginBottom: 6,
+  },
+  cardDate: {
+    fontSize: 12,
+    color: '#64748b',
+  },
 });
